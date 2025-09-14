@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXR 호환성 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+        
+        .container {
+            max-width: 600px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            color: #4ECDC4;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid #F44336;
+            color: #F44336;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.3);
+            border: 2px solid #FFC107;
+            color: #FFC107;
+        }
+        
+        .info {
+            background: rgba(33, 150, 243, 0.3);
+            border: 2px solid #2196F3;
+            color: #2196F3;
+        }
+        
+        .feature-list {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-item:last-child {
+            border-bottom: none;
+        }
+        
+        .check {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .cross {
+            color: #F44336;
+            font-weight: bold;
+        }
+        
+        code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕶️ WebXR 호환성 테스트</h1>
+        
+        <div class="test-section">
+            <h3>🔍 시스템 확인</h3>
+            <div class="feature-list" id="systemCheck">
+                <div class="feature-item">
+                    <span>HTTPS 연결</span>
+                    <span id="httpsCheck">확인 중...</span>
+                </div>
+                <div class="feature-item">
+                    <span>WebXR API</span>
+                    <span id="webxrCheck">확인 중...</span>
+                </div>
+                <div class="feature-item">
+                    <span>AR 세션 지원</span>
+                    <span id="arSessionCheck">확인 중...</span>
+                </div>
+                <div class="feature-item">
+                    <span>DOM Overlay</span>
+                    <span id="domOverlayCheck">확인 중...</span>
+                </div>
+                <div class="feature-item">
+                    <span>Hit Test</span>
+                    <span id="hitTestCheck">확인 중...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📱 기기 정보</h3>
+            <div id="deviceInfo" class="status info">
+                기기 정보를 확인하는 중...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 WebXR 테스트</h3>
+            <button id="testBtn" onclick="testBasicWebXR()">기본 WebXR 테스트</button>
+            <button id="arTestBtn" onclick="testARSession()" disabled>AR 세션 테스트</button>
+            <div id="testResult" class="status" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🛠️ 권장 설정</h3>
+            <div class="info status">
+                <strong>Chrome Flags 설정:</strong><br>
+                1. <code>chrome://flags/#webxr-incubations</code> → Enabled ✅<br>
+                2. <code>chrome://flags/#enable-webxr-ar-module</code> → Enabled<br>
+                3. <code>chrome://flags/#webxr-ar-dom-overlay</code> → Enabled<br>
+                4. Chrome 재시작 필요
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 대안 방법</h3>
+            <button onclick="goToARJS()" style="background: linear-gradient(45deg, #4ECDC4, #44A08D);">
+                AR.js 버전 사용하기
+            </button>
+            <button onclick="testWebRTC()" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                카메라 접근 테스트
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let systemCompatible = false;
+        
+        // 페이지 로드 시 자동 검사
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSystemCompatibility();
+            getDeviceInfo();
+        });
+
+        async function checkSystemCompatibility() {
+            // HTTPS 확인
+            const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
+            document.getElementById('httpsCheck').innerHTML = isHTTPS ? 
+                '<span class="check">✓</span>' : '<span class="cross">✗</span>';
+
+            // WebXR API 확인
+            const hasWebXR = 'xr' in navigator;
+            document.getElementById('webxrCheck').innerHTML = hasWebXR ? 
+                '<span class="check">✓</span>' : '<span class="cross">✗</span>';
+
+            if (!hasWebXR) {
+                document.getElementById('arSessionCheck').innerHTML = '<span class="cross">✗</span>';
+                document.getElementById('domOverlayCheck').innerHTML = '<span class="cross">✗</span>';
+                document.getElementById('hitTestCheck').innerHTML = '<span class="cross">✗</span>';
+                return;
+            }
+
+            try {
+                // AR 세션 지원 확인
+                const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                document.getElementById('arSessionCheck').innerHTML = arSupported ? 
+                    '<span class="check">✓</span>' : '<span class="cross">✗</span>';
+                
+                if (arSupported) {
+                    document.getElementById('arTestBtn').disabled = false;
+                    systemCompatible = true;
+                }
+
+                // DOM Overlay 지원 확인 (실험적)
+                try {
+                    await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: [],
+                        optionalFeatures: ['dom-overlay']
+                    });
+                    document.getElementById('domOverlayCheck').innerHTML = '<span class="check">✓</span>';
+                } catch (e) {
+                    // 세션 요청이 실패해도 기능 자체는 지원할 수 있음
+                    document.getElementById('domOverlayCheck').innerHTML = '<span class="warning">?</span>';
+                }
+
+                // Hit Test 지원 확인
+                try {
+                    await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['hit-test'],
+                        optionalFeatures: []
+                    });
+                    document.getElementById('hitTestCheck').innerHTML = '<span class="check">✓</span>';
+                } catch (e) {
+                    document.getElementById('hitTestCheck').innerHTML = '<span class="cross">✗</span>';
+                }
+
+            } catch (error) {
+                console.error('WebXR 호환성 확인 중 오류:', error);
+                document.getElementById('arSessionCheck').innerHTML = '<span class="cross">✗</span>';
+                document.getElementById('domOverlayCheck').innerHTML = '<span class="cross">✗</span>';
+                document.getElementById('hitTestCheck').innerHTML = '<span class="cross">✗</span>';
+            }
+        }
+
+        function getDeviceInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth
+            };
+
+            const deviceDiv = document.getElementById('deviceInfo');
+            deviceDiv.innerHTML = `
+                <strong>브라우저:</strong> ${getBrowserName()}<br>
+                <strong>플랫폼:</strong> ${info.platform}<br>
+                <strong>화면:</strong> ${info.screenWidth}x${info.screenHeight}<br>
+                <strong>색상 심도:</strong> ${info.colorDepth}bit<br>
+                <strong>온라인:</strong> ${info.onLine ? '예' : '아니오'}
+            `;
+        }
+
+        function getBrowserName() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Edge')) return 'Edge';
+            return 'Unknown';
+        }
+
+        async function testBasicWebXR() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'status info';
+            resultDiv.textContent = '기본 WebXR 테스트 진행 중...';
+
+            try {
+                if (!navigator.xr) {
+                    throw new Error('WebXR API가 지원되지 않습니다');
+                }
+
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                
+                if (supported) {
+                    resultDiv.className = 'status success';
+                    resultDiv.textContent = '✅ WebXR AR 세션이 지원됩니다! AR 테스트를 진행할 수 있습니다.';
+                    document.getElementById('arTestBtn').disabled = false;
+                } else {
+                    resultDiv.className = 'status warning';
+                    resultDiv.textContent = '⚠️ WebXR는 지원되지만 AR 세션은 지원되지 않습니다.';
+                }
+
+            } catch (error) {
+                resultDiv.className = 'status error';
+                resultDiv.textContent = `❌ WebXR 테스트 실패: ${error.message}`;
+                console.error('WebXR 테스트 오류:', error);
+            }
+        }
+
+        async function testARSession() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'status info';
+            resultDiv.textContent = 'AR 세션 생성 테스트 중... 권한을 허용해주세요.';
+
+            try {
+                // 최소한의 설정으로 AR 세션 요청
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: [],
+                    optionalFeatures: ['local', 'local-floor', 'bounded-floor']
+                });
+
+                resultDiv.className = 'status success';
+                resultDiv.textContent = '🎉 AR 세션이 성공적으로 생성되었습니다! WebXR이 정상 작동합니다.';
+                
+                // 세션 종료
+                setTimeout(() => {
+                    session.end();
+                    resultDiv.textContent += '\n\n✅ 테스트 완료. 이제 실제 가스관 AR 앱을 사용할 수 있습니다.';
+                }, 3000);
+
+            } catch (error) {
+                resultDiv.className = 'status error';
+                let errorMessage = `❌ AR 세션 생성 실패: ${error.message}`;
+                
+                // 구체적인 에러 메시지 제공
+                if (error.message.includes('not supported')) {
+                    errorMessage += '\n\n💡 해결방법:\n1. Chrome Flags 설정 확인\n2. HTTPS 환경에서 테스트\n3. ARCore 지원 기기 사용';
+                } else if (error.message.includes('permission')) {
+                    errorMessage += '\n\n💡 카메라 권한을 허용해주세요';
+                }
+                
+                resultDiv.textContent = errorMessage;
+                console.error('AR 세션 테스트 오류:', error);
+            }
+        }
+
+        async function testWebRTC() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'status info';
+            resultDiv.textContent = '카메라 접근 테스트 중...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                resultDiv.className = 'status success';
+                resultDiv.textContent = '✅ 카메라 접근 성공! 기본적인 권한은 정상입니다.';
+                
+                // 스트림 종료
+                stream.getTracks().forEach(track => track.stop());
+                
+            } catch (error) {
+                resultDiv.className = 'status error';
+                resultDiv.textContent = `❌ 카메라 접근 실패: ${error.message}`;
+            }
+        }
+
+        function goToARJS() {
+            const confirmation = confirm('AR.js 버전으로 이동하시겠습니까? (더 넓은 기기 호환성)');
+            if (confirmation) {
+                // AR.js 버전 사용 (이전에 만든 버전)
+                alert('AR.js 버전을 사용하세요. WebXR 문제를 우회할 수 있습니다.');
+            }
+        }
+
+        // 자동 새로고침 (Chrome Flags 변경 후)
+        if (location.search.includes('refresh')) {
+            setTimeout(() => {
+                location.href = location.href.replace('?refresh=1', '');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
