@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가스관 배관 AR 위치 표시 시스템</title>
+    <meta name="description" content="WebXR과 AR.js를 활용한 가스관 배관 위치 표시 AR 애플리케이션">
+    
+    <!-- PWA 메타데이터 -->
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- AR 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ar.js/2.2.2/aframe-ar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            overflow: hidden;
+            user-select: none;
+        }
+        
+        /* 초기 로딩 화면 */
+        .startup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            color: white;
+            text-align: center;
+            transition: opacity 0.5s ease;
+        }
+        
+        .startup-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .startup-logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        
+        .startup-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .startup-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+        
+        .tech-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tech-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .tech-btn.webxr {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+        }
+        
+        .tech-btn.arjs {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+        }
+        
+        .tech-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .loading-indicator {
+            margin-top: 30px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* AR UI 컨트롤 */
+        .ar-ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            min-width: 300px;
+            pointer-events: auto;
+            border: 2px solid rgba(255,107,53,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 300px;
+            pointer-events: auto;
+            border: 2px solid #FF6B35;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 30px;
+            pointer-events: auto;
+            border: 2px solid rgba(78,205,196,0.3);
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-panel .panel-title {
+            color: #FF6B35;
+        }
+        
+        .info-panel .panel-title {
+            color: #FF6B35;
+        }
+        
+        .ar-button {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ar-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .ar-button:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+            box-shadow: 0 4px 20px rgba(78,205,196,0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #FF6B6B, #EE5A52);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+        }
+        
+        .ar-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+        }
+        
+        .ar-button:active {
+            transform: translateY(0);
+        }
+        
+        .ar-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(78,205,196,0.2);
+            border: 2px solid #4ECDC4;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4ECDC4;
+            margin: 10px 0;
+        }
+        
+        .pipe-info-detail {
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 15px 0;
+            color: #333;
+        }
+        
+        .warning-box {
+            background: linear-gradient(45deg, #FFE6E6, #FFF0F0);
+            border: 2px solid #FF6B6B;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #CC0000;
+            font-weight: 600;
+            text-align: center;
+            animation: pulse 3s infinite;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.2);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .location-display {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .tech-info {
+            background: rgba(102,126,234,0.1);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .control-panel, .info-panel {
+                position: relative;
+                margin: 15px;
+                min-width: auto;
+                max-width: none;
+            }
+            
+            .status-bar {
+                position: relative;
+                transform: none;
+                margin: 15px;
+                min-width: auto;
+            }
+            
+            .tech-selector {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .startup-title {
+                font-size: 1.5rem;
+            }
+            
+            .startup-logo {
+                font-size: 3rem;
+            }
+        }
+        
+        /* AR 씬 스타일 */
+        a-scene {
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .ar-hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 시작 화면 -->
+    <div class="startup-screen" id="startupScreen">
+        <div class="startup-logo">🚰</div>
+        <h1 class="startup-title">가스관 AR 시스템</h1>
+        <p class="startup-subtitle">지하 배관 위치를 AR로 확인하세요</p>
+        
+        <div class="tech-selector">
+            <button class="tech-btn webxr" onclick="initializeApp('webxr')">
+                🕶️ WebXR 사용
+                <small style="display:block;font-size:12px;margin-top:5px;">최신 기술</small>
+            </button>
+            <button class="tech-btn arjs" onclick="initializeApp('arjs')">
+                📱 AR.js 사용
+                <small style="display:block;font-size:12px;margin-top:5px;">호환성 우선</small>
+            </button>
+        </div>
+        
+        <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>AR 시스템을 초기화하는 중...</p>
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 14px; opacity: 0.8;">
+            <p>📱 모바일 기기에서 최적화됨</p>
+            <p>🔒 HTTPS 환경에서 구동</p>
+            <p>📍 위치 권한 허용 권장</p>
+        </div>
+    </div>
+
+    <!-- AR UI 컨트롤 -->
+    <div class="ar-ui ar-hidden" id="arUI">
+        <div class="control-panel">
+            <h3 class="panel-title">🔧 배관 제어 시스템</h3>
+            
+            <button class="ar-button btn-primary" onclick="showMainPipes()" id="showMainBtn">
+                메인 배관망 표시
+            </button>
+            
+            <button class="ar-button btn-secondary" onclick="addRandomPipe()" id="addPipeBtn">
+                샘플 배관 추가
+            </button>
+            
+            <button class="ar-button btn-info" onclick="togglePipeVisibility()" id="toggleBtn">
+                배관 표시/숨김
+            </button>
+            
+            <button class="ar-button btn-danger" onclick="clearAllPipes()" id="clearBtn">
+                모든 배관 삭제
+            </button>
+            
+            <div class="status-indicator">
+                <span>📊</span>
+                <span>표시 중: <strong id="pipeCount">0</strong>개 배관</span>
+            </div>
+            
+            <div class="tech-info" id="techInfo">
+                AR 기술: 로딩 중...
+            </div>
+            
+            <div class="location-display" id="locationDisplay">
+                📍 위치 정보를 가져오는 중...
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3 class="panel-title">🚰 배관 정보</h3>
+            
+            <div class="pipe-info-detail">
+                <strong>🏢 관할 구역:</strong> 서울시 중구 을지로<br>
+                <strong>📋 등록 배관:</strong> 1,247개<br>
+                <strong>✅ 점검 완료율:</strong> 98.5%<br>
+                <strong>⚠️ 위험 구역:</strong> 3곳 모니터링<br>
+                <strong>📅 최근 업데이트:</strong> 2024-09-14
+            </div>
+            
+            <div class="warning-box">
+                ⚠️ 굴착 작업 전 필수 확인<br>
+                <small>안전 담당자: 1588-0000</small>
+            </div>
+            
+            <div id="selectedPipeDetail">
+                <strong>선택된 배관:</strong><br>
+                <small>AR 화면의 배관을 터치하면<br>상세 정보가 표시됩니다.</small>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div id="arStatusMessage">AR 시스템 준비 중...</div>
+        </div>
+    </div>
+
+    <!-- AR.js 씬 (기본 숨김) -->
+    <a-scene
+        id="arScene"
+        class="ar-hidden"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best;"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+        loading-screen="enabled: false"
+        renderer="logarithmicDepthBuffer: true; colorManagement: true; sortObjects: true; antialias: true;"
+        background="color: #000; transparent: true">
+        
+        <a-assets timeout="30000">
+            <!-- 재질 프리셋 -->
+            <a-mixin id="pipe-main" 
+                     material="color: #FF6B35; metalness: 0.8; roughness: 0.2; emissive: #331100; emissiveIntensity: 0.2">
+            </a-mixin>
+            <a-mixin id="pipe-branch" 
+                     material="color: #4ECDC4; metalness: 0.7; roughness: 0.3; emissive: #003333; emissiveIntensity: 0.15">
+            </a-mixin>
+            <a-mixin id="pipe-service" 
+                     material="color: #45B7D1; metalness: 0.6; roughness: 0.4; emissive: #001133; emissiveIntensity: 0.1">
+            </a-mixin>
+            <a-mixin id="danger-material" 
+                     material="color: #FF4444; emissive: #FF0000; emissiveIntensity: 0.4">
+            </a-mixin>
+        </a-assets>
+
+        <!-- 메인 배관 시스템 -->
+        <a-entity id="mainPipeSystem" visible="false">
+            <!-- 주 가스관 -->
+            <a-cylinder 
+                position="0 -1.5 -4"
+                rotation="0 0 90"
+                radius="0.2"
+                height="6"
+                mixin="pipe-main"
+                class="gas-pipe main-pipe"
+                pipe-data="id:GP-M001;diameter:400;material:Steel;pressure:High;depth:1.5"
+                animation="property: rotation; to: 0 360 90; loop: true; dur: 60000; easing: linear">
+            </a-cylinder>
+            
+            <!-- 분기관들 -->
+            <a-cylinder 
+                position="3 -1.2 -4"
+                rotation="0 0 90"
+                radius="0.12"
+                height="3"
+                mixin="pipe-branch"
+                class="gas-pipe branch-pipe"
+                pipe-data="id:GP-B001;diameter:240;material:Steel;pressure:Medium;depth:1.2">
+            </a-cylinder>
+            
+            <a-cylinder 
+                position="-3 -1.2 -4"
+                rotation="0 0 90"
+                radius="0.12"
+                height="3"
+                mixin="pipe-branch"
+                class="gas-pipe branch-pipe"
+                pipe-data="id:GP-B002;diameter:240;material:Steel;pressure:Medium;depth:1.2">
+            </a-cylinder>
+            
+            <!-- 서비스 연결관 -->
+            <a-cylinder 
+                position="1.5 -0.8 -3"
+                rotation="45 0 45"
+                radius="0.08"
+                height="2"
+                mixin="pipe-service"
+                class="gas-pipe service-pipe"
+                pipe-data="id:GP-S001;diameter:160;material:PE;pressure:Low;depth:0.8">
+            </a-cylinder>
+            
+            <!-- 메인 연결부 -->
+            <a-box 
+                position="0 -1.5 -4"
+                width="6"
+                height="0.4"
+                depth="0.4"
+                mixin="pipe-main"
+                class="connection-box">
+            </a-box>
+            
+            <!-- 위험 표지판 -->
+            <a-box 
+                position="0 0.5 -4"
+                width="2"
+                height="2"
+                depth="0.1"
+                mixin="danger-material"
+                class="warning-sign"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+                <a-text 
+                    value="⚠️ 위험\n고압 가스관\n굴착 금지"
+                    position="0 0 0.06"
+                    align="center"
+                    color="white"
+                    scale="1.5 1.5 1.5"
+                    font="roboto">
+                </a-text>
+            </a-box>
+        </a-entity>
+
+        <!-- 동적 배관 컨테이너 -->
+        <a-entity id="dynamicPipes"></a-entity>
+
+        <!-- 정보 라벨 시스템 -->
+        <a-entity id="infoLabels" visible="false">
+            <a-text 
+                value="🔥 메인 가스관 (GP-M001)\n직경: 400mm | 깊이: 1.5m\n압력: 고압 | 재질: 강관\n설치: 2020-03-15 | 점검: 2024-08-20"
+                position="0 1.5 -4"
+                align="center"
+                color="white"
+                background="color: rgba(255,107,53,0.9); opacity: 0.95"
+                scale="0.8 0.8 0.8"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 30000"
+                class="info-label main-label">
+            </a-text>
+
+            <a-text 
+                value="⚡ 분기관 A (GP-B001)\n직경: 240mm | 깊이: 1.2m\n압력: 중압 | 상태: 정상"
+                position="3 1.2 -4"
+                align="center"
+                color="white"
+                background="color: rgba(78,205,196,0.9); opacity: 0.95"
+                scale="0.6 0.6 0.6"
+                class="info-label branch-label">
+            </a-text>
+
+            <a-text 
+                value="⚡ 분기관 B (GP-B002)\n직경: 240mm | 깊이: 1.2m\n압력: 중압 | 상태: 정상"
+                position="-3 1.2 -4"
+                align="center"
+                color="white"
+                background="color: rgba(78,205,196,0.9); opacity: 0.95"
+                scale="0.6 0.6 0.6"
+                class="info-label branch-label">
+            </a-text>
+
+            <a-text 
+                value="🏠 서비스관 (GP-S001)\n직경: 160mm | 깊이: 0.8m\n압력: 저압 | 재질: PE"
+                position="1.5 1 -3"
+                align="center"
+                color="white"
+                background="color: rgba(69,183,209,0.9); opacity: 0.95"
+                scale="0.5 0.5 0.5"
+                class="info-label service-label">
+            </a-text>
+        </a-entity>
+
+        <!-- 환경 조명 -->
+        <a-light type="ambient" color="white" intensity="0.7"></a-light>
+        <a-light type="directional" position="3 5 3" intensity="0.6" shadow="cast: true; receive: true"></a-light>
+        <a-light type="point" position="0 2 -4" intensity="0.4" color="#FF6B35"></a-light>
+        
+        <!-- AR 카메라 -->
+        <a-camera-static 
+            look-controls="enabled: false" 
+            wasd-controls="enabled: false"
+            cursor="rayOrigin: mouse">
+        </a-camera-static>
+    </a-scene>
+
+    <script>
+        // 전역 변수
+        let currentTech = null;
+        let pipeCount = 0;
+        let pipesVisible = true;
+        let userLocation = null;
+        let isARActive = false;
+
+        // AR 컴포넌트 등록
+        AFRAME.registerComponent('pipe-data', {
+            schema: {
+                id: {type: 'string'},
+                diameter: {type: 'number'},
+                material: {type: 'string'},
+                pressure: {type: 'string'},
+                depth: {type: 'number'}
+            },
+            
+            init: function () {
+                // 클릭 이벤트
+                this.el.addEventListener('click', () => {
+                    showPipeDetails(this.data);
+                    // 터치 피드백
+                    if (navigator.vibrate) navigator.vibrate(100);
+                });
+                
+                // 호버 효과
+                this.el.addEventListener('mouseenter', () => {
+                    this.el.setAttribute('animation__scale', 'property: scale; to: 1.1 1.1 1.1; dur: 200');
+                });
+                
+                this.el.addEventListener('mouseleave', () => {
+                    this.el.setAttribute('animation__scale', 'property: scale; to: 1 1 1; dur: 200');
+                });
+            }
+        });
+
+        // 앱 초기화
+        async function initializeApp(tech) {
+            currentTech = tech;
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            // 기술별 설정
+            if (tech === 'webxr') {
+                await initializeWebXR();
+            } else {
+                await initializeARJS();
+            }
+            
+            // UI 전환
+            setTimeout(() => {
+                document.getElementById('startupScreen').classList.add('hidden');
+                document.getElementById('arUI').classList.remove('ar-hidden');
+                document.getElementById('arScene').classList.remove('ar-hidden');
+                updateTechInfo();
+                getCurrentLocation();
+                isARActive = true;
+            }, 2000);
+        }
+
+        // WebXR 초기화
+        async function initializeWebXR() {
+            document.getElementById('arStatusMessage').textContent = '🕶️ WebXR 모드로 초기화 중...';
+            
+            try {
+                if (!navigator.xr) {
+                    throw new Error('WebXR이 지원되지 않습니다');
+                }
+                
+                const supported = await navigator.xr.is
