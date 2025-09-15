@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가스관 배관 AR 위치 표시</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ar.js/2.2.2/aframe-ar.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        
+        .pipe-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-size: 12px;
+            max-width: 200px;
+            border: 2px solid #ff6b35;
+        }
+        
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #e55a2b;
+        }
+        
+        .status {
+            background: rgba(0,255,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen">
+        <h2>AR 초기화 중...</h2>
+        <p>카메라 권한을 허용해주세요</p>
+    </div>
+
+    <div class="controls">
+        <h3>🔧 가스관 AR 제어</h3>
+        <button onclick="togglePipes()">배관 표시/숨김</button>
+        <button onclick="addRandomPipe()">랜덤 배관 추가</button>
+        <button onclick="clearAllPipes()">모든 배관 삭제</button>
+        <div class="status">
+            배관 개수: <span id="pipeCount">3</span>개
+        </div>
+        <div style="font-size: 11px; margin-top: 10px; color: #ccc;">
+            화면을 돌려서 주변 배관을 확인하세요
+        </div>
+    </div>
+
+    <div class="pipe-info">
+        <h4>🚰 배관 정보</h4>
+        <div><strong>ID:</strong> GP-001</div>
+        <div><strong>직경:</strong> 300mm</div>
+        <div><strong>재질:</strong> 강관</div>
+        <div><strong>압력:</strong> 중압</div>
+        <div><strong>깊이:</strong> 1.5m</div>
+        <div style="color: red; font-weight: bold; margin-top: 5px;">
+            ⚠️ 굴착 주의
+        </div>
+    </div>
+
+    <a-scene
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false"
+        gesture-detector
+        id="scene">
+        
+        <a-assets>
+            <a-mixin id="pipe-material" 
+                     material="color: #ff6b35; metalness: 0.8; roughness: 0.2;">
+            </a-mixin>
+            <a-mixin id="danger-material" 
+                     material="color: red; emissive: red; emissiveIntensity: 0.3;">
+            </a-mixin>
+        </a-assets>
+
+        <!-- 기본 배관들 -->
+        <a-entity id="pipe-container">
+            <!-- 메인 가스관 -->
+            <a-cylinder 
+                position="0 -1 -3"
+                rotation="0 0 90"
+                radius="0.15"
+                height="4"
+                mixin="pipe-material"
+                class="gas-pipe"
+                animation="property: rotation; to: 0 360 90; loop: true; dur: 20000">
+            </a-cylinder>
+            
+            <!-- 분기관 1 -->
+            <a-cylinder 
+                position="2 -1 -3"
+                rotation="0 0 90"
+                radius="0.1"
+                height="2.5"
+                mixin="pipe-material"
+                class="gas-pipe">
+            </a-cylinder>
+            
+            <!-- 분기관 2 -->
+            <a-cylinder 
+                position="-2 -1 -3"
+                rotation="0 0 90"
+                radius="0.1"
+                height="2.5"
+                mixin="pipe-material"
+                class="gas-pipe">
+            </a-cylinder>
+
+            <!-- 연결 배관들 -->
+            <a-box 
+                position="0 -1 -3"
+                width="4"
+                height="0.3"
+                depth="0.3"
+                mixin="pipe-material"
+                class="gas-pipe">
+            </a-box>
+            
+            <!-- 위험 표시 -->
+            <a-box 
+                position="0 0.5 -3"
+                width="1"
+                height="1"
+                depth="0.1"
+                mixin="danger-material"
+                class="gas-pipe">
+                <a-text 
+                    value="⚠️ GAS\n위험"
+                    position="0 0 0.06"
+                    align="center"
+                    color="white"
+                    scale="2 2 2">
+                </a-text>
+            </a-box>
+        </a-entity>
+
+        <!-- 정보 라벨들 -->
+        <a-text 
+            value="메인 가스관\nGP-001\n직경: 300mm\n깊이: 1.5m"
+            position="0 1 -3"
+            align="center"
+            color="white"
+            background="color: rgba(0,0,0,0.7); opacity: 0.8"
+            scale="0.8 0.8 0.8"
+            class="info-label">
+        </a-text>
+
+        <a-text 
+            value="분기관 A\nGP-002\n직경: 200mm"
+            position="2 1 -3"
+            align="center"
+            color="white"
+            background="color: rgba(0,0,0,0.7); opacity: 0.8"
+            scale="0.6 0.6 0.6"
+            class="info-label">
+        </a-text>
+
+        <a-text 
+            value="분기관 B\nGP-003\n직경: 200mm"
+            position="-2 1 -3"
+            align="center"
+            color="white"
+            background="color: rgba(0,0,0,0.7); opacity: 0.8"
+            scale="0.6 0.6 0.6"
+            class="info-label">
+        </a-text>
+
+        <!-- 조명 -->
+        <a-light type="ambient" color="white" intensity="0.5"></a-light>
+        <a-light type="directional" position="0 10 0" intensity="0.3"></a-light>
+
+        <!-- 카메라 -->
+        <a-camera-static></a-camera-static>
+    </a-scene>
+
+    <script>
+        let pipeCount = 3;
+        let pipesVisible = true;
+        
+        // AR 초기화 완료 대기
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.display = 'none';
+            }, 3000);
+        });
+
+        // 배관 표시/숨김 토글
+        function togglePipes() {
+            const pipes = document.querySelectorAll('.gas-pipe, .info-label');
+            pipesVisible = !pipesVisible;
+            
+            pipes.forEach(pipe => {
+                pipe.setAttribute('visible', pipesVisible);
+            });
+        }
+
+        // 랜덤 위치에 배관 추가
+        function addRandomPipe() {
+            const container = document.getElementById('pipe-container');
+            const scene = document.querySelector('a-scene');
+            
+            // 랜덤 위치 생성
+            const x = (Math.random() - 0.5) * 6;
+            const z = -2 - Math.random() * 4;
+            const diameter = 0.05 + Math.random() * 0.1;
+            const length = 1 + Math.random() * 2;
+            
+            // 새 배관 생성
+            const newPipe = document.createElement('a-cylinder');
+            newPipe.setAttribute('position', `${x} -1 ${z}`);
+            newPipe.setAttribute('rotation', '0 0 90');
+            newPipe.setAttribute('radius', diameter.toString());
+            newPipe.setAttribute('height', length.toString());
+            newPipe.setAttribute('material', 'color: #35ff6b; metalness: 0.6; roughness: 0.3');
+            newPipe.setAttribute('class', 'gas-pipe');
+            
+            // 정보 라벨 추가
+            const label = document.createElement('a-text');
+            const pipeId = `GP-${String(pipeCount + 100).padStart(3, '0')}`;
+            label.setAttribute('value', `${pipeId}\n신규 배관\n직경: ${Math.round(diameter * 400)}mm`);
+            label.setAttribute('position', `${x} 1 ${z}`);
+            label.setAttribute('align', 'center');
+            label.setAttribute('color', 'white');
+            label.setAttribute('background', 'color: rgba(0,100,0,0.7); opacity: 0.8');
+            label.setAttribute('scale', '0.5 0.5 0.5');
+            label.setAttribute('class', 'info-label');
+            
+            container.appendChild(newPipe);
+            container.appendChild(label);
+            
+            pipeCount++;
+            document.getElementById('pipeCount').textContent = pipeCount;
+            
+            // 애니메이션 효과
+            newPipe.setAttribute('animation', 'property: scale; from: 0 0 0; to: 1 1 1; dur: 1000');
+        }
+
+        // 모든 배관 삭제
+        function clearAllPipes() {
+            const container = document.getElementById('pipe-container');
+            container.innerHTML = '';
+            pipeCount = 0;
+            document.getElementById('pipeCount').textContent = pipeCount;
+        }
+
+        // 배관 클릭 시 상세 정보 표시
+        document.addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.classList.contains('gas-pipe')) {
+                alert('배관 상세 정보:\n- 설치일: 2023-03-15\n- 최근 점검: 2024-08-20\n- 상태: 정상\n- 담당자: 김기사');
+            }
+        });
+
+        // 터치 제스처 지원
+        AFRAME.registerComponent('gesture-detector', {
+            schema: {
+                element: {default: ''}
+            },
+            init: function () {
+                this.targetElement = this.data.element && document.querySelector(this.data.element);
+                this.internalState = {
+                    previousState: null
+                };
+            },
+            handlers: {
+                touchstart: function (e) {
+                    this.internalState.previousState = e;
+                },
+                touchend: function (e) {
+                    const previousState = this.internalState.previousState;
+                    if (previousState && previousState.touches && previousState.touches.length === 2 && e.changedTouches && e.changedTouches.length === 2) {
+                        // 줌 제스처 감지
+                        const dx = e.changedTouches[0].clientX - e.changedTouches[1].clientX;
+                        const dy = e.changedTouches[0].clientY - e.changedTouches[1].clientY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // 간단한 줌 효과 구현
+                        const camera = document.querySelector('a-camera-static');
+                        if (camera) {
+                            const currentPos = camera.getAttribute('position');
+                            const newZ = Math.max(-8, Math.min(-1, currentPos.z + (distance > 100 ? 0.5 : -0.5)));
+                            camera.setAttribute('position', `${currentPos.x} ${currentPos.y} ${newZ}`);
+                        }
+                    }
+                    this.internalState.previousState = null;
+                }
+            }
+        });
+
+        // 성능 모니터링
+        setInterval(() => {
+            const scene = document.querySelector('a-scene');
+            if (scene && scene.renderer) {
+                console.log('FPS:', scene.renderer.info.render.frame);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

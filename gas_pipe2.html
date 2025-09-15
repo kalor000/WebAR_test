@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; gpsMinDistance: 1; gpsTimeInterval: 1000;"
+    >
+      <!-- 가스관 라인 (예시 좌표: 서울시청 → 남대문 방향) -->
+      <a-entity
+        gps-entity-place="latitude: 37.5665; longitude: 126.9780;"
+        geometry="primitive: cylinder; height: 2; radius: 0.2"
+        material="color: yellow"
+        rotation="90 0 0"
+      >
+        <a-text value="가스관 시작" scale="5 5 5" position="0 2 0"></a-text>
+      </a-entity>
+
+      <a-entity
+        gps-entity-place="latitude: 37.5658; longitude: 126.9770;"
+        geometry="primitive: cylinder; height: 2; radius: 0.2"
+        material="color: yellow"
+        rotation="90 0 0"
+      ></a-entity>
+
+      <a-entity
+        gps-entity-place="latitude: 37.5650; longitude: 126.9760;"
+        geometry="primitive: cylinder; height: 2; radius: 0.2"
+        material="color: yellow"
+        rotation="90 0 0"
+      >
+        <a-text value="가스관 끝" scale="5 5 5" position="0 2 0"></a-text>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>

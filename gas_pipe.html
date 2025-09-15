@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; gpsMinDistance: 1; gpsTimeInterval: 1000;"
+    >
+      <!-- 가스관 위치 표시 (예: 위도/경도 기반 구체) -->
+      <a-entity
+        gps-entity-place="latitude: 37.5665; longitude: 126.9780;"
+        geometry="primitive: box"
+        material="color: red"
+        scale="2 2 2"
+      >
+        <a-text value="가스관" scale="5 5 5" position="0 2 0"></a-text>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>

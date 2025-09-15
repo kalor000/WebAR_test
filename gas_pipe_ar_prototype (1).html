@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebXR 가스관 배관 AR MVP</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            pointer-events: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-panel {
+            top: 20px;
+            left: 20px;
+            min-width: 280px;
+        }
+        
+        .info-panel {
+            top: 20px;
+            right: 20px;
+            min-width: 250px;
+        }
+        
+        .status-panel {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        
+        h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #4ECDC4;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-green {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        }
+        
+        .btn-red {
+            background: linear-gradient(45deg, #FF6B6B, #EE5A52);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 15px;
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid #4ECDC4;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 5px 0;
+            color: #4ECDC4;
+        }
+        
+        .pipe-info {
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        
+        .warning {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #FF6B6B;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            color: #FF6B6B;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #4ECDC4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #999;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .panel {
+                padding: 15px;
+                border-radius: 12px;
+            }
+            
+            .control-panel, .info-panel {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin: 10px;
+                min-width: auto;
+            }
+            
+            .status-panel {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="ui">
+            <div class="panel control-panel">
+                <h3>🔧 AR 가스관 제어</h3>
+                <button id="startAR" onclick="startARSession()">AR 세션 시작</button>
+                <button id="showPipes" onclick="showNearbyPipes()" disabled>근처 배관 표시</button>
+                <button id="addPipe" onclick="addSamplePipe()" disabled class="btn-green">샘플 배관 추가</button>
+                <button id="clearPipes" onclick="clearAllPipes()" disabled class="btn-red">모든 배관 삭제</button>
+                
+                <div class="status">
+                    표시된 배관: <span id="pipeCount">0</span>개
+                </div>
+                
+                <div class="coordinates" id="locationInfo">
+                    위치 정보를 가져오는 중...
+                </div>
+            </div>
+
+            <div class="panel info-panel">
+                <h3>🚰 배관 정보 시스템</h3>
+                <div class="pipe-info">
+                    <strong>현재 지역:</strong> 서울시 중구<br>
+                    <strong>등록된 배관:</strong> 1,247개<br>
+                    <strong>최근 점검:</strong> 2024-09-10<br>
+                    <strong>위험 지역:</strong> 3곳
+                </div>
+                
+                <div class="warning">
+                    ⚠️ 굴착 작업 전 반드시 확인
+                </div>
+                
+                <div id="selectedPipeInfo">
+                    배관을 선택하면 상세 정보가 표시됩니다.
+                </div>
+            </div>
+
+            <div class="panel status-panel">
+                <div id="arStatus">WebXR 지원을 확인하는 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <h2>AR 세션을 초기화하는 중...</h2>
+        <p>카메라 권한을 허용해주세요</p>
+    </div>
+
+    <script>
+        // WebXR 및 Three.js 관련 변수
+        let scene, camera, renderer, xrSession;
+        let pipes = [];
+        let userLocation = null;
+        let isARActive = false;
+
+        // 가스관 데이터 모델
+        const gasPipeData = [
+            {
+                id: 'GP-001',
+                position: { x: 0, y: -1.5, z: -3 },
+                diameter: 0.3,
+                length: 4,
+                material: 'Steel',
+                pressure: 'High',
+                installDate: '2023-03-15',
+                color: 0xff4444
+            },
+            {
+                id: 'GP-002', 
+                position: { x: 2, y: -1.2, z: -3 },
+                diameter: 0.2,
+                length: 2.5,
+                material: 'PE',
+                pressure: 'Medium',
+                installDate: '2022-11-10',
+                color: 0xffa500
+            },
+            {
+                id: 'GP-003',
+                position: { x: -2, y: -2.0, z: -3 },
+                diameter: 0.4,
+                length: 3,
+                material: 'Steel',
+                pressure: 'Low',
+                installDate: '2021-08-20',
+                color: 0x44ff44
+            }
+        ];
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeThreeJS();
+            checkWebXRSupport();
+            getCurrentLocation();
+            setupEventListeners();
+        });
+
+        // Three.js 초기화
+        function initializeThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                preserveDrawingBuffer: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            renderer.setClearColor(0x000000, 0);
+            
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            // 조명 설정
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 10, 5);
+            scene.add(directionalLight);
+
+            // 애니메이션 루프 시작
+            renderer.setAnimationLoop(render);
+        }
+
+        // WebXR 지원 확인
+        async function checkWebXRSupport() {
+            const statusDiv = document.getElementById('arStatus');
+            
+            if (!navigator.xr) {
+                statusDiv.textContent = '❌ WebXR이 지원되지 않습니다';
+                statusDiv.style.color = '#ff6b6b';
+                return;
+            }
+
+            try {
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (supported) {
+                    statusDiv.textContent = '✅ AR 지원됨 - 시작 버튼을 누르세요';
+                    statusDiv.style.color = '#4ECDC4';
+                    document.getElementById('startAR').disabled = false;
+                } else {
+                    statusDiv.textContent = '⚠️ AR 모드가 지원되지 않습니다';
+                    statusDiv.style.color = '#ffa500';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ AR 지원 확인 실패';
+                statusDiv.style.color = '#ff6b6b';
+                console.error('WebXR support check failed:', error);
+            }
+        }
+
+        // AR 세션 시작
+        async function startARSession() {
+            document.getElementById('loading').style.display = 'flex';
+            
+            try {
+                xrSession = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['hit-test'],
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.getElementById('ui') }
+                });
+
+                await renderer.xr.setSession(xrSession);
+                
+                xrSession.addEventListener('end', onXRSessionEnd);
+                
+                isARActive = true;
+                updateUIForARMode(true);
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                // 기본 배관들 자동 생성
+                setTimeout(() => {
+                    showNearbyPipes();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('AR 세션 시작 실패:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('arStatus').textContent = '❌ AR 세션 시작 실패: ' + error.message;
+            }
+        }
+
+        // AR 세션 종료 처리
+        function onXRSessionEnd() {
+            isARActive = false;
+            updateUIForARMode(false);
+            clearAllPipes();
+        }
+
+        // UI 업데이트
+        function updateUIForARMode(isActive) {
+            const buttons = ['showPipes', 'addPipe', 'clearPipes'];
+            buttons.forEach(id => {
+                document.getElementById(id).disabled = !isActive;
+            });
+            
+            document.getElementById('startAR').textContent = isActive ? 'AR 세션 활성화됨' : 'AR 세션 시작';
+            document.getElementById('startAR').disabled = isActive;
+            
+            document.getElementById('arStatus').textContent = isActive ? 
+                '🎯 AR 활성화 - 주변을 둘러보세요' : '✅ AR 지원됨 - 시작 버튼을 누르세요';
+        }
+
+        // 근처 배관 표시
+        function showNearbyPipes() {
+            if (!isARActive) return;
+            
+            clearAllPipes();
+            
+            gasPipeData.forEach((pipeData, index) => {
+                setTimeout(() => {
+                    createPipe(pipeData);
+                }, index * 500); // 순차적으로 생성
+            });
+            
+            updatePipeCount();
+        }
+
+        // 3D 배관 생성
+        function createPipe(pipeData) {
+            const geometry = new THREE.CylinderGeometry(
+                pipeData.diameter / 2,
+                pipeData.diameter / 2,
+                pipeData.length,
+                32
+            );
+            
+            const material = new THREE.MeshLambertMaterial({
+                color: pipeData.color,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const pipe = new THREE.Mesh(geometry, material);
+            
+            pipe.position.set(
+                pipeData.position.x,
+                pipeData.position.y,
+                pipeData.position.z
+            );
+            pipe.rotation.z = Math.PI / 2; // 수평으로 회전
+            
+            // 파이프 정보 저장
+            pipe.userData = pipeData;
+            
+            // 애니메이션 효과
+            pipe.scale.set(0, 0, 0);
+            animateScale(pipe, { x: 1, y: 1, z: 1 }, 1000);
+            
+            scene.add(pipe);
+            pipes.push(pipe);
+            
+            // 정보 라벨 추가
+            createInfoLabel(pipe, pipeData);
+        }
+
+        // 정보 라벨 생성
+        function createInfoLabel(parentPipe, pipeData) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 256;
+            
+            // 배경
+            context.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 테두리
+            context.strokeStyle = '#4ECDC4';
+            context.lineWidth = 4;
+            context.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            
+            // 텍스트
+            context.fillStyle = 'white';
+            context.font = 'bold 24px Arial';
+            context.fillText(pipeData.id, 20, 40);
+            
+            context.font = '18px Arial';
+            context.fillText(`직경: ${pipeData.diameter * 1000}mm`, 20, 70);
+            context.fillText(`재질: ${pipeData.material}`, 20, 100);
+            context.fillText(`압력: ${pipeData.pressure}`, 20, 130);
+            context.fillText(`설치: ${pipeData.installDate}`, 20, 160);
+            
+            // 위험 표시
+            context.fillStyle = '#FF6B6B';
+            context.font = 'bold 20px Arial';
+            context.fillText('⚠️ 굴착 주의', 20, 200);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const labelMaterial = new THREE.MeshBasicMaterial({ 
+                map: texture,
+                transparent: true,
+                alphaTest: 0.1
+            });
+            
+            const labelGeometry = new THREE.PlaneGeometry(1, 0.5);
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            
+            label.position.copy(parentPipe.position);
+            label.position.y += 1;
+            label.lookAt(camera.position);
+            
+            scene.add(label);
+            pipes.push(label);
+        }
+
+        // 샘플 배관 추가
+        function addSamplePipe() {
+            if (!isARActive) return;
+            
+            const randomPipe = {
+                id: `GP-${String(Math.floor(Math.random() * 900) + 100)}`,
+                position: {
+                    x: (Math.random() - 0.5) * 8,
+                    y: -1 - Math.random() * 2,
+                    z: -2 - Math.random() * 4
+                },
+                diameter: 0.1 + Math.random() * 0.3,
+                length: 1 + Math.random() * 3,
+                material: ['Steel', 'PE', 'Cast Iron'][Math.floor(Math.random() * 3)],
+                pressure: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+                installDate: '2024-09-14',
+                color: Math.random() * 0xffffff
+            };
+            
+            createPipe(randomPipe);
+            updatePipeCount();
+        }
+
+        // 모든 배관 삭제
+        function clearAllPipes() {
+            pipes.forEach(pipe => {
+                scene.remove(pipe);
+                if (pipe.geometry) pipe.geometry.dispose();
+                if (pipe.material) {
+                    if (pipe.material.map) pipe.material.map.dispose();
+                    pipe.material.dispose();
+                }
+            });
+            pipes = [];
+            updatePipeCount();
+        }
+
+        // 배관 개수 업데이트
+        function updatePipeCount() {
+            const pipeCount = pipes.filter(pipe => pipe.userData && pipe.userData.id).length;
+            document.getElementById('pipeCount').textContent = pipeCount;
+        }
+
+        // 애니메이션 함수
+        function animateScale(object, target, duration) {
+            const start = { x: object.scale.x, y: object.scale.y, z: object.scale.z };
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                object.scale.x = start.x + (target.x - start.x) * easeOut;
+                object.scale.y = start.y + (target.y - start.y) * easeOut;
+                object.scale.z = start.z + (target.z - start.z) * easeOut;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        // 현재 위치 가져오기
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        userLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        
+                        document.getElementById('locationInfo').innerHTML = 
+                            `위도: ${userLocation.latitude.toFixed(6)}<br>경도: ${userLocation.longitude.toFixed(6)}`;
+                    },
+                    error => {
+                        document.getElementById('locationInfo').textContent = '위치 정보 사용 불가';
+                    }
+                );
+            }
+        }
+
+        // 렌더링 루프
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            window.addEventListener('resize', onWindowResize);
+            
+            // 터치 이벤트 (배관 선택)
+            renderer.domElement.addEventListener('click', onCanvasClick);
+        }
+
+        // 윈도우 리사이즈 처리
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 캔버스 클릭 처리
+        function onCanvasClick(event) {
+            if (!isARActive) return;
+            
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            
+            const pipeObjects = pipes.filter(pipe => pipe.userData && pipe.userData.id);
+            const intersects = raycaster.intersectObjects(pipeObjects);
+            
+            if (intersects.length > 0) {
+                const selectedPipe = intersects[0].object;
+                showPipeDetails(selectedPipe.userData);
+                
+                // 선택 효과
+                selectedPipe.material.emissive.setHex(0x444444);
+                setTimeout(() => {
+                    selectedPipe.material.emissive.setHex(0x000000);
+                }, 1000);
+            }
+        }
+
+        // 배관 상세 정보 표시
+        function showPipeDetails(pipeData) {
+            const infoDiv = document.getElementById('selectedPipeInfo');
+            infoDiv.innerHTML = `
+                <strong>${pipeData.id}</strong><br>
+                직경: ${pipeData.diameter * 1000}mm<br>
+                길이: ${pipeData.length}m<br>
+                재질: ${pipeData.material}<br>
+                압력: ${pipeData.pressure}<br>
+                설치일: ${pipeData.installDate}<br>
+                깊이: ${Math.abs(pipeData.position.y).toFixed(1)}m
+            `;
+        }
+
+        // 성능 모니터링
+        setInterval(() => {
+            if (renderer && renderer.info) {
+                console.log(`렌더 호출: ${renderer.info.render.calls}, 삼각형: ${renderer.info.render.triangles}`);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
