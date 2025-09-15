@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가스관 AR 시스템 - 메인 허브</title>
+    <meta name="description" content="가스관 배관 위치를 AR로 확인하는 통합 플랫폼">
+    
+    <!-- PWA 메타데이터 -->
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚰</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 헤더 */
+        .header {
+            text-align: center;
+            padding: 40px 0 60px;
+            position: relative;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #FFD700, #FF6B35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(78, 205, 196, 0.2);
+            border: 2px solid #4ECDC4;
+            border-radius: 25px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4ECDC4;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* AR 앱 카드 그리드 */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+        
+        .app-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .app-card:hover::before {
+            left: 100%;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        .app-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+            text-align: center;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #FFD700;
+        }
+        
+        .app-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            opacity: 0.9;
+            text-align: center;
+        }
+        
+        .app-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+        
+        .app-features li {
+            padding: 5px 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .app-features li::before {
+            content: '✓';
+            color: #4ECDC4;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .app-button {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            color: white;
+        }
+        
+        .btn-webxr {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+        }
+        
+        .btn-arjs {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.3);
+        }
+        
+        .btn-compatibility {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-complete {
+            background: linear-gradient(45deg, #45B7D1, #96C93D);
+            box-shadow: 0 4px 20px rgba(69, 183, 209, 0.3);
+        }
+        
+        .app-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+        }
+        
+        .tech-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .recommended {
+            border-color: #FFD700 !important;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .recommended::after {
+            content: '⭐ 추천';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        
+        /* 정보 섹션 */
+        .info-section {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #4ECDC4;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .info-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .info-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+        
+        .info-card p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        
+        /* 푸터 */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 60px;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .footer-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .logo {
+                font-size: 3rem;
+            }
+            
+            .apps-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .app-card {
+                padding: 25px;
+            }
+            
+            .info-section {
+                padding: 25px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+        }
+        
+        /* 로딩 애니메이션 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 스크롤 애니메이션 */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        /* 호버 효과 */
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+            to { text-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,215,0,0.6); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <header class="header">
+            <div class="logo">🚰</div>
+            <h1 class="main-title glow">가스관 AR 시스템</h1>
+            <p class="subtitle">
+                지하 배관 위치를 증강현실(AR)로 정확하게 확인하고 관리하는 
+                차세대 스마트 인프라 플랫폼입니다.
+            </p>
+            <div class="status-badge">
+                <span>🟢</span>
+                <span>시스템 정상 운영 중</span>
+            </div>
+        </header>
+
+        <!-- AR 앱 선택 그리드 -->
+        <section class="apps-grid">
+            <!-- WebXR 기반 AR 앱 -->
+            <div class="app-card recommended slide-in" onclick="openApp('ar-complete.html')">
+                <div class="tech-badge">WebXR + AR.js</div>
+                <div class="app-icon">🕶️</div>
+                <h3 class="app-title">완전 통합 AR 앱</h3>
+                <p class="app-description">
+                    WebXR와 AR.js를 모두 지원하는 최신 통합 버전으로, 
+                    기기 호환성을 자동으로 감지하여 최적의 AR 경험을 제공합니다.
+                </p>
+                <ul class="app-features">
+                    <li>자동 기술 선택 (WebXR ↔ AR.js)</li>
+                    <li>실시간 배관 위치 표시</li>
+                    <li>터치 인터랙션 지원</li>
+                    <li>GPS 기반 위치 서비스</li>
+                    <li>프리미엄 UI/UX</li>
+                </ul>
+                <a href="ar-complete.html" class="app-button btn-complete">
+                    🚀 통합 AR 앱 시작하기
+                </a>
+            </div>
+
+            <!-- WebXR 전용 앱 -->
+            <div class="app-card slide-in" onclick="openApp('ar-webxr.html')">
+                <div class="tech-badge">WebXR</div>
+                <div class="app-icon">⚡</div>
+                <h3 class="app-title">WebXR AR 앱</h3>
+                <p class="app-description">
+                    최신 WebXR 기술을 활용한 고성능 AR 애플리케이션으로, 
+                    Chrome 브라우저에서 네이티브 앱 수준의 AR 경험을 제공합니다.
+                </p>
+                <ul class="app-features">
+                    <li>고성능 3D 렌더링</li>
+                    <li>정밀한 공간 추적</li>
+                    <li>Hand Tracking 지원</li>
+                    <li>DOM Overlay 기능</li>
+                    <li>최신 브라우저 최적화</li>
+                </ul>
+                <a href="ar-webxr.html" class="app-button btn-webxr">
+                    🔮 WebXR 앱 체험하기
+                </a>
+            </div>
+
+            <!-- AR.js 기반 앱 -->
+            <div class="app-card slide-in" onclick="openApp('ar-arjs.html')">
+                <div class="tech-badge">AR.js</div>
+                <div class="app-icon">📱</div>
+                <h3 class="app-title">AR.js 호환 앱</h3>
+                <p class="app-description">
+                    AR.js 라이브러리 기반의 안정적인 AR 애플리케이션으로, 
+                    다양한 기기와 브라우저에서 호환성을 보장합니다.
+                </p>
+                <ul class="app-features">
+                    <li>광범위한 기기 호환성</li>
+                    <li>마커 기반 AR 지원</li>
+                    <li>안정적인 성능</li>
+                    <li>빠른 로딩 속도</li>
+                    <li>구형 기기 지원</li>
+                </ul>
+                <a href="ar-arjs.html" class="app-button btn-arjs">
+                    📲 AR.js 앱 실행하기
+                </a>
+            </div>
+
+            <!-- 호환성 테스트 도구 -->
+            <div class="app-card slide-in" onclick="openApp('compatibility-test.html')">
+                <div class="tech-badge">진단 도구</div>
+                <div class="app-icon">🛠️</div>
+                <h3 class="app-title">호환성 테스트</h3>
+                <p class="app-description">
+                    현재 기기와 브라우저의 AR 기능 지원 여부를 진단하고, 
+                    최적의 AR 앱 버전을 추천해주는 테스트 도구입니다.
+                </p>
+                <ul class="app-features">
+                    <li>WebXR 지원 여부 확인</li>
+                    <li>카메라 권한 테스트</li>
+                    <li>성능 벤치마크</li>
+                    <li>맞춤 추천 서비스</li>
+                    <li>문제 해결 가이드</li>
+                </ul>
+                <a href="compatibility-test.html" class="app-button btn-compatibility">
+                    🔍 호환성 검사하기
+                </a>
+            </div>
+        </section>
+
+        <!-- 시스템 정보 -->
+        <section class="info-section">
+            <h2 class="info-title">🏗️ 시스템 특징</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-icon">🎯</div>
+                    <h4>정밀한 위치 추적</h4>
+                    <p>GPS와 AR 기술을 결합하여 지하 배관의 정확한 위치를 실시간으로 표시합니다.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🔒</div>
+                    <h4>안전한 데이터 관리</h4>
+                    <p>HTTPS 보안 연결과 암호화된 데이터 전송으로 중요한 인프라 정보를 안전하게 보호합니다.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">📱</div>
+                    <h4>크로스 플랫폼 지원</h4>
+                    <p>Android, iOS, Windows 등 다양한 플랫폼과 브라우저에서 일관된 경험을 제공합니다.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">⚡</div>
+                    <h4>실시간 업데이트</h4>
+                    <p>배관 상태, 점검 이력, 위험 요소 등의 정보를 실시간으로 업데이트하고 표시합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 사용 가이드 -->
+        <section class="info-section">
+            <h2 class="info-title">📋 사용 가이드</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-icon">1️⃣</div>
+                    <h4>호환성 확인</h4>
+                    <p>먼저 호환성 테스트를 실행하여 기기의 AR 지원 여부를 확인하세요.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">2️⃣</div>
+                    <h4>권한 허용</h4>
+                    <p>카메라와 위치 권한을 허용하여 정확한 AR 경험을 활성화하세요.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">3️⃣</div>
+                    <h4>AR 앱 실행</h4>
+                    <p>추천된 AR 앱을 선택하여 지하 배관 위치를 확인하고 관리하세요.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">4️⃣</div>
+                    <h4>데이터 활용</h4>
+                    <p>표시된 배관 정보를 터치하여 상세한 관리 데이터를 확인하세요.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="#" class="footer-link" onclick="showSystemInfo()">시스템 정보</a>
+            <a href="#" class="footer-link" onclick="showHelp()">도움말</a>
+            <a href="#" class="footer-link" onclick="showContact()">문의하기</a>
+            <a href="https://github.com" class="footer-link" target="_blank">GitHub</a>
+        </div>
+        <p style="opacity: 0.7; font-size: 0.9rem;">
+            © 2024 가스관 AR 시스템. Made with ❤️ for infrastructure safety.
+        </p>
+        <p style="opacity: 0.5; font-size: 0.8rem; margin-top: 10px;">
+            현재 버전: v1.0.0 | 최적화: 모바일 우선 | 지원: Chrome, Safari, Edge
+        </p>
+    </footer>
+
+    <script>
+        // 페이지 로딩 완료 시 애니메이션 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 가스관 AR 시스템 메인 허브 로딩 완료');
+            
+            // 스크롤 애니메이션 추가
+            const cards = document.querySelectorAll('.slide-in');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.animation = `slideInUp 0.6s ease-out ${index * 0.1}s both`;
+                }, 100);
+            });
+            
+            // 시스템 상태 체크
+            checkSystemStatus();
+        });
+
+        // AR 앱 열기
+        function openApp(appUrl) {
+            // 로딩 표시
+            const button = event.target.closest('.app-card').querySelector('.app-button');
+            const originalText = button.textContent;
+            button.innerHTML = '<span class="loading"></span> 로딩 중...';
+            
+            // 실제 페이지 이동
+            setTimeout(() => {
+                window.location.href = appUrl;
+            }, 500);
+        }
+
+        // 시스템 상태 확인
+        function checkSystemStatus() {
+            const statusBadge = document.querySelector('.status-badge');
+            const isHTTPS = location.protocol === 'https:';
+            const hasCamera = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+            const hasGeolocation = 'geolocation' in navigator;
+            
+            let status = '🟢 시스템 정상 운영 중';
+            let color = '#4ECDC4';
+            
+            if (!isHTTPS) {
+                status = '🟡 HTTPS 권장';
+                color = '#FFA500';
+            } else if (!hasCamera) {
+                status = '🟠 카메라 미지원';
+                color = '#FF6B35';
+            } else if (!hasGeolocation) {
+                status = '🟠 위치 서비스 미지원';
+                color = '#FF6B35';
+            }
+            
+            statusBadge.innerHTML = `<span>${status.split(' ')[0]}</span><span>${status.substring(2)}</span>`;
+            statusBadge.style.borderColor = color;
+            statusBadge.style.color = color;
+        }
+
+        // 시스템 정보 표시
+        function showSystemInfo() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                url: window.location.href,
+                protocol: location.protocol,
+                host: location.host
+            };
+            
+            let infoText = '📊 시스템 정보\n\n';
+            infoText += `🌐 브라우저: ${getBrowserName()}\n`;
+            infoText += `💻 플랫폼: ${info.platform}\n`;
+            infoText += `🌍 언어: ${info.language}\n`;
+            infoText += `🔒 프로토콜: ${info.protocol}\n`;
+            infoText += `📍 호스트: ${info.host}\n`;
+            infoText += `🟢 온라인: ${info.onLine ? '예' : '아니오'}\n`;
+            infoText += `🍪 쿠키: ${info.cookieEnabled ? '활성화' : '비활성화'}`;
+            
+            alert(infoText);
+        }
+
+        // 브라우저 이름 확인
+        function getBrowserName() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari')) return 'Safari';
+            if (ua.includes('Edge')) return 'Edge';
+            return 'Unknown';
+        }
+
+        // 도움말 표시
+        function showHelp() {
+            const helpText = `
+🆘 가스관 AR 시스템 도움말
+
+📱 지원 기기:
+• Android 7.0+ (Chrome 권장)
+• iOS 12+ (Safari 지원)
+• Windows 10+ (Edge/Chrome)
+
+🔧 필수 요구사항:
+• 카메라 권한 허용
+• 위치 권한 허용 (선택)
+• HTTPS 환경 권장
+• 안정적인 인터넷 연결
+
+🚀 사용 팁:
+• 밝은 환경에서 사용
+• 기기를 안정적으로 유지
+• 정기적인 브라우저 업데이트
+• WiFi 연결 권장
+
+❓ 문제 해결:
+• 앱이 실행되지 않으면 새로고침
+• 카메라가 작동하지 않으면 권한 확인
+• 성능이 느리면 다른 앱 종료
+            `;
+            
+            alert(helpText.trim());
+        }
+
+        // 문의하기
+        function showContact() {
+            const contactText = `
+📞 문의 및 지원
+
+🏢 개발팀: AR 인프라 솔루션팀
+📧 이메일: support@gasAR.com
+📱 전화: 1588-0000
+🌐 웹사이트: https://gasAR.com
+
+⏰ 지원 시간:
+평일 09:00 - 18:00
+토요일 09:00 - 12:00
+일요일 및 공휴일 휴무
+
+🔧 기술 지원:
+• 실시간 채팅 지원
+• 원격 기술 지원
+• 온사이트 교육 서비스
+• 24시간 긴급 지원 (유료)
+            `;
+            
+            alert(contactText.trim());
+        }
+
+        // 카드 호버 효과 향상
+        document.querySelectorAll('.app-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+            
+            // 터치 기기에서의 탭 효과
+            card.addEventListener('touchstart', function() {
+                this.style.transform = 'translateY(-5px) scale(1.01)';
+            });
+            
+            card.addEventListener('touchend', function() {
+                setTimeout(() => {
+                    this.style.transform = 'translateY(0) scale(1)';
+                }, 150);
+            });
+        });
+
+        // 스크롤 시 요소별 애니메이션 트리거
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('slide-in');
+                    // 한 번 실행 후 관찰 중단
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // 관찰할 요소들 등록
+        document.querySelectorAll('.info-card, .app-card').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 페이지 통계 수집 (간단한 방문자 통계)
+        function trackPageView() {
+            const visitData = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                referrer: document.referrer,
+                url: window.location.href
+            };
+            
+            // 로컬 스토리지에 방문 기록 저장
+            try {
+                const visits = JSON.parse(localStorage.getItem('ar_visits') || '[]');
+                visits.push(visitData);
+                // 최근 100개만 유지
+                if (visits.length > 100) visits.shift();
+                localStorage.setItem('ar_visits', JSON.stringify(visits));
+                
+                console.log(`📊 방문 횟수: ${visits.length}`);
+            } catch (e) {
+                console.log('📊 통계 수집 실패:', e);
+            }
+        }
+
+        // 성능 모니터링
+        function monitorPerformance() {
+            if ('performance' in window) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log(`⚡ 페이지 로드 시간: ${loadTime}ms`);
+                
+                // DOMContentLoaded 시간
+                const domTime = performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart;
+                console.log(`🏗️ DOM 로드 시간: ${domTime}ms`);
+            }
+        }
+
+        // 기기 호환성 미리 체크
+        function preCheckCompatibility() {
+            const compatibility = {
+                webxr: 'xr' in navigator,
+                camera: 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices,
+                geolocation: 'geolocation' in navigator,
+                https: location.protocol === 'https:',
+                mobile: /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            };
+
+            // 추천 앱 결정
+            let recommendedApp = 'ar-arjs.html'; // 기본값
+            
+            if (compatibility.webxr && compatibility.https) {
+                recommendedApp = 'ar-complete.html';
+            } else if (compatibility.camera) {
+                recommendedApp = 'ar-arjs.html';
+            }
+
+            // 추천 배지 업데이트
+            const cards = document.querySelectorAll('.app-card');
+            cards.forEach(card => {
+                const button = card.querySelector('.app-button');
+                if (button && button.getAttribute('href') === recommendedApp) {
+                    card.classList.add('recommended');
+                }
+            });
+
+            console.log('🔍 호환성 사전 체크 완료:', compatibility);
+            console.log('🎯 추천 앱:', recommendedApp);
+            
+            return compatibility;
+        }
+
+        // PWA 설치 프롬프트 (향후 확장용)
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💾 PWA 설치 프롬프트 준비됨');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // 설치 버튼 표시 (선택사항)
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            const installButton = document.createElement('button');
+            installButton.textContent = '📲 앱으로 설치';
+            installButton.className = 'app-button btn-info';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-size: 14px;
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`📱 PWA 설치 결과: ${outcome}`);
+                    deferredPrompt = null;
+                    installButton.remove();
+                }
+            });
+            
+            document.body.appendChild(installButton);
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            // Ctrl + 1-4: 각각의 AR 앱으로 이동
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        window.location.href = 'ar-complete.html';
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        window.location.href = 'ar-webxr.html';
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        window.location.href = 'ar-arjs.html';
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        window.location.href = 'compatibility-test.html';
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        showHelp();
+                        break;
+                }
+            }
+        });
+
+        // 다크모드/라이트모드 토글 (선택사항)
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.style.background.includes('667eea');
+            
+            if (isDark) {
+                body.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+                body.style.color = '#333';
+            } else {
+                body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                body.style.color = 'white';
+            }
+            
+            // 로컬 스토리지에 테마 저장
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        }
+
+        // 테마 복원
+        function restoreTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                toggleTheme();
+            }
+        }
+
+        // 에러 처리
+        window.addEventListener('error', (e) => {
+            console.error('🚨 전역 오류:', e.error);
+            
+            // 사용자에게 친근한 오류 메시지
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 107, 107, 0.9);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                z-index: 10000;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            errorDiv.textContent = '⚠️ 일시적인 오류가 발생했습니다. 페이지를 새로고침해주세요.';
+            
+            document.body.appendChild(errorDiv);
+            
+            // 5초 후 자동 제거
+            setTimeout(() => errorDiv.remove(), 5000);
+        });
+
+        // 초기화 함수들 실행
+        trackPageView();
+        monitorPerformance();
+        preCheckCompatibility();
+        restoreTheme();
+
+        // 서비스 워커 등록 (PWA 기능)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('⚙️ Service Worker 등록 성공:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('⚙️ Service Worker 등록 실패:', error);
+                    });
+            });
+        }
+
+        // 온라인/오프라인 상태 감지
+        window.addEventListener('online', () => {
+            console.log('🌐 온라인 상태로 변경됨');
+            checkSystemStatus();
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('📴 오프라인 상태로 변경됨');
+            checkSystemStatus();
+        });
+
+        // 브라우저 탭 활성화/비활성화 감지
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('👀 페이지가 백그라운드로 이동');
+            } else {
+                console.log('👀 페이지가 포그라운드로 복귀');
+                // 돌아왔을 때 상태 재확인
+                checkSystemStatus();
+            }
+        });
+
+        console.log('✅ 가스관 AR 시스템 메인 허브 초기화 완료');
+        console.log('🎮 키보드 단축키: Ctrl+1~4 (각 AR 앱), Ctrl+H (도움말)');
+    </script>
+</body>
+</html>
