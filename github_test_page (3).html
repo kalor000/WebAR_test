@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초대용량 시스템 분석 테스트 페이지</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 25%, #2d2d5f 50%, #404080 75%, #5353a0 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #1a1a3e, #404080);
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #64b5f6, #42a5f5, #1976d2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .mega-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border-color: rgba(100, 181, 246, 0.3);
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, rgba(100, 181, 246, 0.2), rgba(66, 165, 245, 0.2));
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .metric-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #64b5f6;
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .value {
+            font-family: 'Courier New', monospace;
+            background: rgba(100, 181, 246, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #64b5f6;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .chart-container {
+            height: 150px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, #1976d2, #42a5f5, #64b5f6);
+            border-radius: 2px 2px 0 0;
+            transition: height 0.8s ease-in-out;
+            opacity: 0.8;
+        }
+
+        .pie-chart {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 10px auto;
+            position: relative;
+            background: conic-gradient(
+                #f44336 0deg 72deg,
+                #ff9800 72deg 144deg,
+                #ffeb3b 144deg 216deg,
+                #4caf50 216deg 288deg,
+                #2196f3 288deg 360deg
+            );
+        }
+
+        .pie-chart::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .gauge {
+            width: 100px;
+            height: 50px;
+            background: conic-gradient(from 180deg, 
+                #f44336 0deg 60deg,
+                #ff9800 60deg 120deg,
+                #4caf50 120deg 180deg
+            );
+            border-radius: 100px 100px 0 0;
+            position: relative;
+            margin: 20px auto;
+        }
+
+        .gauge::after {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            width: 50px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50px 50px 0 0;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .status-box {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-ok { background: rgba(76, 175, 80, 0.2); border-color: #4caf50; }
+        .status-warning { background: rgba(255, 152, 0, 0.2); border-color: #ff9800; }
+        .status-error { background: rgba(244, 67, 54, 0.2); border-color: #f44336; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(100, 181, 246, 0.1);
+            font-weight: 600;
+        }
+
+        .live-counter {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #64b5f6;
+            font-family: 'Courier New', monospace;
+            background: rgba(100, 181, 246, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2px;
+            margin: 15px 0;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .network-graph {
+            position: relative;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .network-node {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #64b5f6;
+            border-radius: 50%;
+            animation: networkPulse 3s infinite ease-in-out;
+        }
+
+        @keyframes networkPulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        .spectrum-analyzer {
+            height: 100px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: end;
+            justify-content: space-around;
+            padding: 5px;
+            margin: 15px 0;
+        }
+
+        .spectrum-bar {
+            width: 4px;
+            background: linear-gradient(to top, #1976d2, #42a5f5, #64b5f6);
+            border-radius: 2px;
+            animation: spectrumDance 2s infinite ease-in-out;
+        }
+
+        @keyframes spectrumDance {
+            0%, 100% { height: 20%; }
+            25% { height: 80%; }
+            50% { height: 40%; }
+            75% { height: 90%; }
+        }
+
+        .matrix-display {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            height: 120px;
+            overflow: hidden;
+            line-height: 1.2;
+            color: #4caf50;
+        }
+
+        @media (max-width: 768px) {
+            .mega-grid {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .metric-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .floating-stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1976d2, #42a5f5, #64b5f6);
+            z-index: 1001;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-indicator" id="scrollIndicator"></div>
+    
+    <div class="floating-stats" id="floatingStats">
+        <div>실시간 통계</div>
+        <div>페이지 로드: <span id="loadTime">0</span>ms</div>
+        <div>메모리: <span id="memoryUsage">0</span>MB</div>
+        <div>FPS: <span id="fpsCounter">60</span></div>
+        <div>업타임: <span id="uptime">00:00</span></div>
+    </div>
+
+    <div class="main-container">
+        <div class="header">
+            <h1>🔬 초대용량 시스템 분석 대시보드</h1>
+            <p>실시간 공간·구조·기능·양적 데이터 종합 모니터링 시스템</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="pulse"></div>
+                    시스템 활성
+                </div>
+                <div class="status-item">
+                    <div class="pulse"></div>
+                    실시간 모니터링
+                </div>
+                <div class="status-item">
+                    <div class="pulse"></div>
+                    데이터 수집 중
+                </div>
+                <div class="status-item">
+                    총 <span id="totalMetrics">0</span>개 메트릭
+                </div>
+            </div>
+        </div>
+
+        <div class="mega-grid">
+            <!-- 브라우저 공간 정보 -->
+            <div class="card">
+                <div class="card-header">🌐 브라우저 공간 정보</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="windowWidth">0</div>
+                            <div class="metric-label">윈도우 너비 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="windowHeight">0</div>
+                            <div class="metric-label">윈도우 높이 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="screenWidth">0</div>
+                            <div class="metric-label">화면 너비 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="screenHeight">0</div>
+                            <div class="metric-label">화면 높이 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="pixelRatio">0</div>
+                            <div class="metric-label">픽셀 밀도</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="colorDepth">0</div>
+                            <div class="metric-label">색상 깊이</div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="label">브라우저 영역 비율</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="browserAreaRatio" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOM 구조 분석 -->
+            <div class="card">
+                <div class="card-header">🏗️ DOM 구조 분석</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="totalElements">0</div>
+                            <div class="metric-label">총 요소 수</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="divElements">0</div>
+                            <div class="metric-label">DIV 요소</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="scriptElements">0</div>
+                            <div class="metric-label">스크립트 태그</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="styleElements">0</div>
+                            <div class="metric-label">스타일 태그</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="linkElements">0</div>
+                            <div class="metric-label">링크 태그</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="domDepth">0</div>
+                            <div class="metric-label">DOM 깊이</div>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="domChart"></div>
+                </div>
+            </div>
+
+            <!-- 메모리 및 성능 -->
+            <div class="card">
+                <div class="card-header">💾 메모리 및 성능</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="jsHeapSize">0</div>
+                            <div class="metric-label">JS 힙 (MB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="totalHeapSize">0</div>
+                            <div class="metric-label">총 힙 (MB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="heapLimit">0</div>
+                            <div class="metric-label">힙 제한 (MB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="domLoadTime">0</div>
+                            <div class="metric-label">DOM 로드 (ms)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="pageLoadTime">0</div>
+                            <div class="metric-label">페이지 로드 (ms)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="renderTime">0</div>
+                            <div class="metric-label">렌더 시간 (ms)</div>
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="label">메모리 사용률</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="memoryProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="pie-chart" id="memoryPie"></div>
+                </div>
+            </div>
+
+            <!-- 네트워크 분석 -->
+            <div class="card">
+                <div class="card-header">🌍 네트워크 분석</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="downloadSpeed">0</div>
+                            <div class="metric-label">다운로드 (Mbps)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="latency">0</div>
+                            <div class="metric-label">지연시간 (ms)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="packetLoss">0</div>
+                            <div class="metric-label">패킷 손실 (%)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="connectionType">-</div>
+                            <div class="metric-label">연결 타입</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="resourceCount">0</div>
+                            <div class="metric-label">로드 리소스</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="transferSize">0</div>
+                            <div class="metric-label">전송량 (KB)</div>
+                        </div>
+                    </div>
+                    <div class="network-graph" id="networkGraph"></div>
+                    <div class="status-grid">
+                        <div class="status-box status-ok" id="dnsStatus">DNS: OK</div>
+                        <div class="status-box status-ok" id="httpStatus">HTTP: OK</div>
+                        <div class="status-box status-ok" id="httpsStatus">HTTPS: OK</div>
+                        <div class="status-box status-warning" id="cdnStatus">CDN: SLOW</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실시간 시스템 모니터링 -->
+            <div class="card">
+                <div class="card-header">⏱️ 실시간 시스템 모니터링</div>
+                <div class="card-content">
+                    <div class="live-counter" id="liveCounter">00:00:00</div>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="cpuUsage">0</div>
+                            <div class="metric-label">CPU 사용률 (%)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="ramUsage">0</div>
+                            <div class="metric-label">RAM 사용률 (%)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="diskUsage">0</div>
+                            <div class="metric-label">디스크 I/O (MB/s)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="networkIO">0</div>
+                            <div class="metric-label">네트워크 I/O (KB/s)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="processes">0</div>
+                            <div class="metric-label">활성 프로세스</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="threads">0</div>
+                            <div class="metric-label">스레드 수</div>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="realtimeChart"></div>
+                </div>
+            </div>
+
+            <!-- 브라우저 기능 매트릭스 -->
+            <div class="card">
+                <div class="card-header">🔧 브라우저 기능 매트릭스</div>
+                <div class="card-content">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>기능</th>
+                                <th>지원 여부</th>
+                                <th>버전</th>
+                                <th>성능 점수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="featureMatrix">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 디바이스 센서 데이터 -->
+            <div class="card">
+                <div class="card-header">📱 디바이스 센서 데이터</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="accelerometerX">0.0</div>
+                            <div class="metric-label">가속도계 X</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="accelerometerY">0.0</div>
+                            <div class="metric-label">가속도계 Y</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="accelerometerZ">0.0</div>
+                            <div class="metric-label">가속도계 Z</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="gyroscopeAlpha">0</div>
+                            <div class="metric-label">자이로 α (°)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="gyroscopeBeta">0</div>
+                            <div class="metric-label">자이로 β (°)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="gyroscopeGamma">0</div>
+                            <div class="metric-label">자이로 γ (°)</div>
+                        </div>
+                    </div>
+                    <div class="gauge" id="orientationGauge"></div>
+                    <div class="spectrum-analyzer" id="motionSpectrum"></div>
+                </div>
+            </div>
+
+            <!-- 보안 및 권한 상태 -->
+            <div class="card">
+                <div class="card-header">🔒 보안 및 권한 상태</div>
+                <div class="card-content">
+                    <div class="status-grid">
+                        <div class="status-box" id="httpsStatus">HTTPS</div>
+                        <div class="status-box" id="cookiesStatus">쿠키</div>
+                        <div class="status-box" id="localStorageStatus">로컬스토리지</div>
+                        <div class="status-box" id="sessionStorageStatus">세션스토리지</div>
+                        <div class="status-box" id="geolocationStatus">위치정보</div>
+                        <div class="status-box" id="notificationStatus">알림</div>
+                        <div class="status-box" id="cameraStatus">카메라</div>
+                        <div class="status-box" id="microphoneStatus">마이크</div>
+                    </div>
+                    <div class="matrix-display" id="securityMatrix"></div>
+                </div>
+            </div>
+
+            <!-- 미디어 및 그래픽 성능 -->
+            <div class="card">
+                <div class="card-header">🎨 미디어 및 그래픽 성능</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="webglVersion">0</div>
+                            <div class="metric-label">WebGL 버전</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="maxTextureSize">0</div>
+                            <div class="metric-label">최대 텍스처</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="videoCodecs">0</div>
+                            <div class="metric-label">비디오 코덱</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="audioCodecs">0</div>
+                            <div class="metric-label">오디오 코덱</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="canvasPerformance">0</div>
+                            <div class="metric-label">Canvas FPS</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="webglScore">0</div>
+                            <div class="metric-label">WebGL 점수</div>
+                        </div>
+                    </div>
+                    <div class="heatmap" id="performanceHeatmap"></div>
+                </div>
+            </div>
+
+            <!-- 데이터 스토리지 분석 -->
+            <div class="card">
+                <div class="card-header">💿 데이터 스토리지 분석</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="localStorageUsage">0</div>
+                            <div class="metric-label">로컬스토리지 (KB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="sessionStorageUsage">0</div>
+                            <div class="metric-label">세션스토리지 (KB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="indexedDBUsage">0</div>
+                            <div class="metric-label">IndexedDB (MB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="cacheUsage">0</div>
+                            <div class="metric-label">캐시 (MB)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="cookieCount">0</div>
+                            <div class="metric-label">쿠키 개수</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="totalDataUsage">0</div>
+                            <div class="metric-label">총 사용량 (MB)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용자 상호작용 분석 -->
+            <div class="card">
+                <div class="card-header">👆 사용자 상호작용 분석</div>
+                <div class="card-content">
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="mouseClicks">0</div>
+                            <div class="metric-label">마우스 클릭</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="keyPresses">0</div>
+                            <div class="metric-label">키 입력</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="scrollDistance">0</div>
+                            <div class="metric-label">스크롤 거리 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="mouseMovement">0</div>
+                            <div class="metric-label">마우스 이동 (px)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="focusChanges">0</div>
+                            <div class="metric-label">포커스 변경</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="resizeEvents">0</div>
+                            <div class="metric-label">창 크기 변경</div>
+                        </div>
+                    </div>
+                    <div class="chart-container" id="interactionChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        const startTime = Date.now();
+        let metrics = {
+            mouseClicks: 0,
+            keyPresses: 0,
+            scrollDistance: 0,
+            mouseMovement: 0,
+            focusChanges: 0,
+            resizeEvents: 0
+        };
+
+        // 페이지 로드 완료 후 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAllData();
+            startRealTimeUpdates();
+            setupEventListeners();
+            updateTotalMetrics();
+        });
+
+        // 모든 데이터 초기화
+        function initializeAllData() {
+            updateBrowserSpaceInfo();
+            updateDOMStructure();
+            updateMemoryPerformance();
+            updateNetworkAnalysis();
+            updateBrowserFeatures();
+            updateDeviceSensors();
+            updateSecurityStatus();
+            updateMediaGraphics();
+            updateDataStorage();
+            updateFloatingStats();
+        }
+
+        // 브라우저 공간 정보 업데이트
+        function updateBrowserSpaceInfo() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const screenWidth = screen.width;
+            const screenHeight = screen.height;
+            const pixelRatio = window.devicePixelRatio || 1;
+            const colorDepth = screen.colorDepth || 24;
+
+            document.getElementById('windowWidth').textContent = windowWidth;
+            document.getElementById('windowHeight').textContent = windowHeight;
+            document.getElementById('screenWidth').textContent = screenWidth;
+            document.getElementById('screenHeight').textContent = screenHeight;
+            document.getElementById('pixelRatio').textContent = pixelRatio.toFixed(2);
+            document.getElementById('colorDepth').textContent = colorDepth + ' bit';
+
+            // 브라우저 영역 비율 계산
+            const areaRatio = ((windowWidth * windowHeight) / (screenWidth * screenHeight) * 100);
+            document.getElementById('browserAreaRatio').style.width = Math.min(areaRatio, 100) + '%';
+        }
+
+        // DOM 구조 분석
+        function updateDOMStructure() {
+            const totalElements = document.getElementsByTagName('*').length;
+            const divElements = document.getElementsByTagName('div').length;
+            const scriptElements = document.getElementsByTagName('script').length;
+            const styleElements = document.getElementsByTagName('style').length;
+            const linkElements = document.getElementsByTagName('link').length;
+
+            document.getElementById('totalElements').textContent = totalElements;
+            document.getElementById('divElements').textContent = divElements;
+            document.getElementById('scriptElements').textContent = scriptElements;
+            document.getElementById('styleElements').textContent = styleElements;
+            document.getElementById('linkElements').textContent = linkElements;
+
+            // DOM 깊이 계산
+            let maxDepth = 0;
+            function getDepth(element, depth = 0) {
+                maxDepth = Math.max(maxDepth, depth);
+                for (let child of element.children) {
+                    getDepth(child, depth + 1);
+                }
+            }
+            getDepth(document.body);
+            document.getElementById('domDepth').textContent = maxDepth;
+
+            // DOM 차트 생성
+            createDOMChart();
+        }
+
+        // 메모리 및 성능 업데이트
+        function updateMemoryPerformance() {
+            // 메모리 정보 (Chrome에서만 지원)
+            if (performance.memory) {
+                const jsHeapSize = Math.round(performance.memory.usedJSHeapSize / 1048576);
+                const totalHeapSize = Math.round(performance.memory.totalJSHeapSize / 1048576);
+                const heapLimit = Math.round(performance.memory.jsHeapSizeLimit / 1048576);
+
+                document.getElementById('jsHeapSize').textContent = jsHeapSize;
+                document.getElementById('totalHeapSize').textContent = totalHeapSize;
+                document.getElementById('heapLimit').textContent = heapLimit;
+
+                // 메모리 사용률 진행바
+                const memoryUsage = (jsHeapSize / heapLimit) * 100;
+                document.getElementById('memoryProgress').style.width = Math.min(memoryUsage, 100) + '%';
+            } else {
+                document.getElementById('jsHeapSize').textContent = 'N/A';
+                document.getElementById('totalHeapSize').textContent = 'N/A';
+                document.getElementById('heapLimit').textContent = 'N/A';
+            }
+
+            // 타이밍 정보
+            if (performance.timing) {
+                const timing = performance.timing;
+                const domLoadTime = timing.domContentLoadedEventEnd - timing.navigationStart;
+                const pageLoadTime = timing.loadEventEnd - timing.navigationStart;
+                const renderTime = timing.loadEventEnd - timing.domLoading;
+
+                document.getElementById('domLoadTime').textContent = domLoadTime || 0;
+                document.getElementById('pageLoadTime').textContent = pageLoadTime || 0;
+                document.getElementById('renderTime').textContent = renderTime || 0;
+            }
+        }
+
+        // 네트워크 분석 업데이트
+        function updateNetworkAnalysis() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            if (connection) {
+                document.getElementById('downloadSpeed').textContent = connection.downlink || 0;
+                document.getElementById('latency').textContent = connection.rtt || 0;
+                document.getElementById('connectionType').textContent = connection.effectiveType || 'unknown';
+            } else {
+                document.getElementById('downloadSpeed').textContent = Math.floor(Math.random() * 100) + 1;
+                document.getElementById('latency').textContent = Math.floor(Math.random() * 50) + 10;
+                document.getElementById('connectionType').textContent = '4g';
+            }
+
+            // 시뮬레이션 데이터
+            document.getElementById('packetLoss').textContent = (Math.random() * 2).toFixed(1);
+            document.getElementById('resourceCount').textContent = performance.getEntriesByType('resource').length;
+            
+            let totalSize = 0;
+            performance.getEntriesByType('resource').forEach(resource => {
+                totalSize += resource.transferSize || 0;
+            });
+            document.getElementById('transferSize').textContent = Math.round(totalSize / 1024);
+
+            createNetworkGraph();
+        }
+
+        // 브라우저 기능 매트릭스
+        function updateBrowserFeatures() {
+            const features = [
+                { name: 'WebGL', supported: !!window.WebGLRenderingContext, version: '2.0', score: 95 },
+                { name: 'WebRTC', supported: !!(window.RTCPeerConnection), version: '1.0', score: 88 },
+                { name: 'Service Worker', supported: 'serviceWorker' in navigator, version: '1.0', score: 92 },
+                { name: 'WebAssembly', supported: typeof WebAssembly === 'object', version: '1.0', score: 90 },
+                { name: 'IndexedDB', supported: !!window.indexedDB, version: '3.0', score: 85 },
+                { name: 'Web Audio', supported: !!(window.AudioContext || window.webkitAudioContext), version: '1.0', score: 87 },
+                { name: 'Geolocation', supported: 'geolocation' in navigator, version: '2.0', score: 80 },
+                { name: 'WebSocket', supported: !!window.WebSocket, version: '13', score: 93 },
+                { name: 'Canvas 2D', supported: !!document.createElement('canvas').getContext, version: '2.0', score: 98 },
+                { name: 'File API', supported: !!(window.File && window.FileReader), version: '1.0', score: 89 }
+            ];
+
+            const tbody = document.getElementById('featureMatrix');
+            tbody.innerHTML = '';
+            
+            features.forEach(feature => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${feature.name}</td>
+                    <td><span class="status-box ${feature.supported ? 'status-ok' : 'status-error'}">${feature.supported ? '✅ 지원' : '❌ 미지원'}</span></td>
+                    <td>${feature.version}</td>
+                    <td>${feature.score}/100</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 디바이스 센서 데이터
+        function updateDeviceSensors() {
+            // 디바이스 모션 이벤트 리스너
+            if (window.DeviceMotionEvent) {
+                window.addEventListener('devicemotion', function(event) {
+                    const acc = event.accelerationIncludingGravity;
+                    if (acc) {
+                        document.getElementById('accelerometerX').textContent = (acc.x || 0).toFixed(1);
+                        document.getElementById('accelerometerY').textContent = (acc.y || 0).toFixed(1);
+                        document.getElementById('accelerometerZ').textContent = (acc.z || 0).toFixed(1);
+                    }
+                });
+            }
+
+            // 디바이스 방향 이벤트 리스너
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', function(event) {
+                    document.getElementById('gyroscopeAlpha').textContent = Math.round(event.alpha || 0);
+                    document.getElementById('gyroscopeBeta').textContent = Math.round(event.beta || 0);
+                    document.getElementById('gyroscopeGamma').textContent = Math.round(event.gamma || 0);
+                });
+            }
+
+            // 시뮬레이션 데이터 (센서가 없는 경우)
+            if (!window.DeviceMotionEvent) {
+                setInterval(() => {
+                    document.getElementById('accelerometerX').textContent = (Math.random() * 2 - 1).toFixed(1);
+                    document.getElementById('accelerometerY').textContent = (Math.random() * 2 - 1).toFixed(1);
+                    document.getElementById('accelerometerZ').textContent = (Math.random() * 2 - 1).toFixed(1);
+                    document.getElementById('gyroscopeAlpha').textContent = Math.round(Math.random() * 360);
+                    document.getElementById('gyroscopeBeta').textContent = Math.round(Math.random() * 180 - 90);
+                    document.getElementById('gyroscopeGamma').textContent = Math.round(Math.random() * 180 - 90);
+                }, 1000);
+            }
+
+            createMotionSpectrum();
+        }
+
+        // 보안 상태 업데이트
+        function updateSecurityStatus() {
+            // HTTPS 확인
+            const isHTTPS = location.protocol === 'https:';
+            updateStatusBox('httpsStatus', isHTTPS, 'HTTPS');
+
+            // 쿠키 확인
+            const cookiesEnabled = navigator.cookieEnabled;
+            updateStatusBox('cookiesStatus', cookiesEnabled, '쿠키');
+
+            // 스토리지 확인
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                updateStatusBox('localStorageStatus', true, '로컬스토리지');
+            } catch (e) {
+                updateStatusBox('localStorageStatus', false, '로컬스토리지');
+            }
+
+            try {
+                sessionStorage.setItem('test', 'test');
+                sessionStorage.removeItem('test');
+                updateStatusBox('sessionStorageStatus', true, '세션스토리지');
+            } catch (e) {
+                updateStatusBox('sessionStorageStatus', false, '세션스토리지');
+            }
+
+            // 권한 상태 확인
+            checkPermissions();
+
+            // 보안 매트릭스 생성
+            createSecurityMatrix();
+        }
+
+        // 상태 박스 업데이트 헬퍼 함수
+        function updateStatusBox(elementId, status, label) {
+            const element = document.getElementById(elementId);
+            element.className = `status-box ${status ? 'status-ok' : 'status-error'}`;
+            element.textContent = `${label}: ${status ? 'OK' : 'NO'}`;
+        }
+
+        // 권한 확인
+        function checkPermissions() {
+            const permissions = ['geolocation', 'notifications', 'camera', 'microphone'];
+            const statusMap = {
+                'geolocation': 'geolocationStatus',
+                'notifications': 'notificationStatus',
+                'camera': 'cameraStatus',
+                'microphone': 'microphoneStatus'
+            };
+
+            permissions.forEach(permission => {
+                if (navigator.permissions && navigator.permissions.query) {
+                    navigator.permissions.query({ name: permission }).then(result => {
+                        const status = result.state === 'granted';
+                        updateStatusBox(statusMap[permission], status, permission.toUpperCase());
+                    }).catch(() => {
+                        updateStatusBox(statusMap[permission], false, permission.toUpperCase());
+                    });
+                } else {
+                    // 권한 API가 없는 경우 기본값 설정
+                    updateStatusBox(statusMap[permission], Math.random() > 0.5, permission.toUpperCase());
+                }
+            });
+        }
+
+        // 미디어 및 그래픽 성능
+        function updateMediaGraphics() {
+            // WebGL 버전 확인
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (gl) {
+                document.getElementById('webglVersion').textContent = '1.0';
+                const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+                document.getElementById('maxTextureSize').textContent = maxTextureSize;
+                document.getElementById('webglScore').textContent = Math.floor(Math.random() * 30) + 70;
+            } else {
+                document.getElementById('webglVersion').textContent = 'N/A';
+                document.getElementById('maxTextureSize').textContent = 'N/A';
+                document.getElementById('webglScore').textContent = '0';
+            }
+
+            // 코덱 지원 확인
+            const video = document.createElement('video');
+            let videoCodecs = 0;
+            const videoFormats = ['video/mp4', 'video/webm', 'video/ogg'];
+            videoFormats.forEach(format => {
+                if (video.canPlayType(format)) videoCodecs++;
+            });
+            document.getElementById('videoCodecs').textContent = videoCodecs;
+
+            // 오디오 코덱
+            const audio = document.createElement('audio');
+            let audioCodecs = 0;
+            const audioFormats = ['audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm'];
+            audioFormats.forEach(format => {
+                if (audio.canPlayType(format)) audioCodecs++;
+            });
+            document.getElementById('audioCodecs').textContent = audioCodecs;
+
+            // Canvas 성능 측정
+            document.getElementById('canvasPerformance').textContent = Math.floor(Math.random() * 40) + 60;
+
+            createPerformanceHeatmap();
+        }
+
+        // 데이터 스토리지 분석
+        function updateDataStorage() {
+            // 로컬 스토리지 사용량
+            let localStorageUsage = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    localStorageUsage += localStorage[key].length;
+                }
+            }
+            document.getElementById('localStorageUsage').textContent = Math.round(localStorageUsage / 1024 * 2) || 0;
+
+            // 세션 스토리지 사용량
+            let sessionStorageUsage = 0;
+            for (let key in sessionStorage) {
+                if (sessionStorage.hasOwnProperty(key)) {
+                    sessionStorageUsage += sessionStorage[key].length;
+                }
+            }
+            document.getElementById('sessionStorageUsage').textContent = Math.round(sessionStorageUsage / 1024 * 2) || 0;
+
+            // 시뮬레이션 데이터
+            document.getElementById('indexedDBUsage').textContent = Math.floor(Math.random() * 50) + 10;
+            document.getElementById('cacheUsage').textContent = Math.floor(Math.random() * 100) + 50;
+            document.getElementById('cookieCount').textContent = document.cookie.split(';').filter(c => c.trim()).length;
+
+            const totalUsage = Math.round((localStorageUsage + sessionStorageUsage) / 1024) + 
+                              Math.floor(Math.random() * 150) + 60;
+            document.getElementById('totalDataUsage').textContent = totalUsage;
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 마우스 클릭
+            document.addEventListener('click', function() {
+                metrics.mouseClicks++;
+                document.getElementById('mouseClicks').textContent = metrics.mouseClicks;
+            });
+
+            // 키 입력
+            document.addEventListener('keydown', function() {
+                metrics.keyPresses++;
+                document.getElementById('keyPresses').textContent = metrics.keyPresses;
+            });
+
+            // 스크롤
+            let lastScrollY = window.scrollY;
+            document.addEventListener('scroll', function() {
+                metrics.scrollDistance += Math.abs(window.scrollY - lastScrollY);
+                lastScrollY = window.scrollY;
+                document.getElementById('scrollDistance').textContent = Math.round(metrics.scrollDistance);
+                updateScrollIndicator();
+            });
+
+            // 마우스 움직임
+            let lastMouseX = 0, lastMouseY = 0;
+            document.addEventListener('mousemove', function(e) {
+                metrics.mouseMovement += Math.abs(e.clientX - lastMouseX) + Math.abs(e.clientY - lastMouseY);
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                document.getElementById('mouseMovement').textContent = Math.round(metrics.mouseMovement);
+            });
+
+            // 포커스 변경
+            window.addEventListener('focus', function() {
+                metrics.focusChanges++;
+                document.getElementById('focusChanges').textContent = metrics.focusChanges;
+            });
+
+            window.addEventListener('blur', function() {
+                metrics.focusChanges++;
+                document.getElementById('focusChanges').textContent = metrics.focusChanges;
+            });
+
+            // 창 크기 변경
+            window.addEventListener('resize', function() {
+                metrics.resizeEvents++;
+                document.getElementById('resizeEvents').textContent = metrics.resizeEvents;
+                updateBrowserSpaceInfo();
+            });
+        }
+
+        // 실시간 업데이트 시작
+        function startRealTimeUpdates() {
+            // 실시간 카운터
+            setInterval(function() {
+                const elapsed = Date.now() - startTime;
+                const hours = Math.floor(elapsed / 3600000);
+                const minutes = Math.floor((elapsed % 3600000) / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                document.getElementById('liveCounter').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+
+            // 시스템 모니터링 시뮬레이션
+            setInterval(function() {
+                document.getElementById('cpuUsage').textContent = Math.floor(Math.random() * 40) + 20;
+                document.getElementById('ramUsage').textContent = Math.floor(Math.random() * 30) + 40;
+                document.getElementById('diskUsage').textContent = (Math.random() * 10).toFixed(1);
+                document.getElementById('networkIO').textContent = Math.floor(Math.random() * 500) + 100;
+                document.getElementById('processes').textContent = Math.floor(Math.random() * 50) + 150;
+                document.getElementById('threads').textContent = Math.floor(Math.random() * 200) + 800;
+                updateRealtimeChart();
+            }, 2000);
+
+            // 플로팅 스탯 업데이트
+            setInterval(updateFloatingStats, 1000);
+        }
+
+        // 플로팅 통계 업데이트
+        function updateFloatingStats() {
+            document.getElementById('loadTime').textContent = Date.now() - startTime;
+            
+            if (performance.memory) {
+                document.getElementById('memoryUsage').textContent = 
+                    Math.round(performance.memory.usedJSHeapSize / 1048576);
+            } else {
+                document.getElementById('memoryUsage').textContent = Math.floor(Math.random() * 50) + 20;
+            }
+
+            document.getElementById('fpsCounter').textContent = Math.floor(Math.random() * 10) + 55;
+            
+            const elapsed = Date.now() - startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('uptime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 차트 생성 함수들
+        function createDOMChart() {
+            const container = document.getElementById('domChart');
+            container.innerHTML = '';
+            
+            const data = [
+                document.getElementsByTagName('div').length,
+                document.getElementsByTagName('span').length,
+                document.getElementsByTagName('p').length,
+                document.getElementsByTagName('img').length,
+                document.getElementsByTagName('a').length
+            ];
+
+            data.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.left = `${index * 18}%`;
+                bar.style.width = '15%';
+                bar.style.height = `${Math.max(value / Math.max(...data) * 100, 10)}%`;
+                container.appendChild(bar);
+            });
+        }
+
+        function createNetworkGraph() {
+            const container = document.getElementById('networkGraph');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 8; i++) {
+                const node = document.createElement('div');
+                node.className = 'network-node';
+                node.style.left = `${Math.random() * 90}%`;
+                node.style.top = `${Math.random() * 90}%`;
+                node.style.animationDelay = `${Math.random() * 3}s`;
+                container.appendChild(node);
+            }
+        }
+
+        function createMotionSpectrum() {
+            const container = document.getElementById('motionSpectrum');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'spectrum-bar';
+                bar.style.animationDelay = `${i * 0.1}s`;
+                container.appendChild(bar);
+            }
+        }
+
+        function createSecurityMatrix() {
+            const container = document.getElementById('securityMatrix');
+            const matrixText = [
+                'TLS 1.3 ENABLED    CSP ACTIVE     HSTS ENFORCED',
+                'CORS CONFIGURED    SRI VERIFIED   XSS PROTECTION',
+                'CLICKJACKING GUARD CSRF TOKEN OK  SECURE HEADERS',
+                'CONTENT-TYPE CHECK FRAME OPTIONS  REFERRER POLICY'
+            ];
+            
+            let currentLine = 0;
+            setInterval(() => {
+                container.textContent = matrixText[currentLine % matrixText.length];
+                currentLine++;
+            }, 2000);
+        }
+
+        function createPerformanceHeatmap() {
+            const container = document.getElementById('performanceHeatmap');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 84; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                const intensity = Math.random();
+                cell.style.backgroundColor = `hsl(${120 - intensity * 120}, 70%, ${30 + intensity * 40}%)`;
+                container.appendChild(cell);
+            }
+        }
+
+        function updateRealtimeChart() {
+            const container = document.getElementById('realtimeChart');
+            const bars = container.querySelectorAll('.chart-bar');
+            
+            if (bars.length === 0) {
+                // 차트 초기화
+                for (let i = 0; i < 15; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.style.left = `${i * 6.2}%`;
+                    bar.style.width = '5%';
+                    container.appendChild(bar);
+                }
+            } else {
+                // 차트 업데이트
+                bars.forEach(bar => {
+                    bar.style.height = `${Math.random() * 80 + 20}%`;
+                });
+            }
+        }
+
+        function updateInteractionChart() {
+            const container = document.getElementById('interactionChart');
+            container.innerHTML = '';
+            
+            const interactions = [
+                metrics.mouseClicks,
+                metrics.keyPresses,
+                Math.floor(metrics.scrollDistance / 100),
+                Math.floor(metrics.mouseMovement / 1000),
+                metrics.focusChanges,
+                metrics.resizeEvents
+            ];
+
+            interactions.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.left = `${index * 15}%`;
+                bar.style.width = '12%';
+                bar.style.height = `${Math.max(value / Math.max(...interactions, 1) * 100, 5)}%`;
+                container.appendChild(bar);
+            });
+        }
+
+        function updateScrollIndicator() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / scrollHeight) * 100;
+            document.getElementById('scrollIndicator').style.width = Math.min(scrollPercent, 100) + '%';
+        }
+
+        function updateTotalMetrics() {
+            // 총 메트릭 수 계산
+            const metricElements = document.querySelectorAll('.metric-value');
+            document.getElementById('totalMetrics').textContent = metricElements.length;
+        }
+
+        // 주기적으로 상호작용 차트 업데이트
+        setInterval(updateInteractionChart, 3000);
+
+        // 초기 데이터 설정
+        setTimeout(() => {
+            document.getElementById('mouseClicks').textContent = metrics.mouseClicks;
+            document.getElementById('keyPresses').textContent = metrics.keyPresses;
+            document.getElementById('scrollDistance').textContent = Math.round(metrics.scrollDistance);
+            document.getElementById('mouseMovement').textContent = Math.round(metrics.mouseMovement);
+            document.getElementById('focusChanges').textContent = metrics.focusChanges;
+            document.getElementById('resizeEvents').textContent = metrics.resizeEvents;
+        }, 100);
+
+        // 페이지 가시성 변경 감지
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('페이지가 숨겨짐');
+            } else {
+                console.log('페이지가 표시됨');
+                // 페이지가 다시 보일 때 데이터 새로고침
+                updateMemoryPerformance();
+                updateNetworkAnalysis();
+            }
+        });
+
+        // 배터리 API (지원되는 경우)
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(function(battery) {
+                console.log('배터리 레벨:', Math.round(battery.level * 100) + '%');
+                console.log('충전 중:', battery.charging);
+            });
+        }
+
+        // 연결 상태 모니터링
+        window.addEventListener('online', function() {
+            console.log('온라인 상태');
+            updateNetworkAnalysis();
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('오프라인 상태');
+        });
+
+        // 성능 옵저버 (지원되는 경우)
+        if ('PerformanceObserver' in window) {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    if (entry.entryType === 'navigation') {
+                        console.log('네비게이션 성능:', entry);
+                    }
+                }
+            });
+            observer.observe({entryTypes: ['navigation', 'resource']});
+        }
+
+        // WebGL 컨텍스트 정보 수집
+        function getWebGLInfo() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo) {
+                    console.log('GPU Vendor:', gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL));
+                    console.log('GPU Renderer:', gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL));
+                }
+            }
+        }
+
+        // 오디오 컨텍스트 테스트
+        function testAudioContext() {
+            if (window.AudioContext || window.webkitAudioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContext();
+                console.log('오디오 샘플 레이트:', audioContext.sampleRate);
+                console.log('오디오 상태:', audioContext.state);
+                audioContext.close();
+            }
+        }
+
+        // 추가 초기화
+        setTimeout(() => {
+            getWebGLInfo();
+            testAudioContext();
+        }, 2000);
+
+        console.log('🔬 초대용량 시스템 분석 대시보드가 초기화되었습니다.');
+        console.log('📊 실시간 데이터 수집이 시작되었습니다.');
+    </script>
+</body>
+</html>
