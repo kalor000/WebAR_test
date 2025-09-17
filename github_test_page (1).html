@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>종합 시스템 테스트 페이지</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .value {
+            color: #2c3e50;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            transition: width 0.3s ease;
+        }
+
+        .color-box {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .test-section {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .test-result {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chart-container {
+            height: 120px;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 3px 3px 0 0;
+            transition: height 0.5s ease;
+        }
+
+        .performance-meter {
+            width: 100%;
+            height: 100px;
+            background: conic-gradient(
+                #e74c3c 0deg 36deg,
+                #f39c12 36deg 108deg,
+                #2ecc71 108deg 360deg
+            );
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .performance-meter::before {
+            content: '';
+            width: 60%;
+            height: 60%;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .performance-text {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #2c3e50;
+        }
+
+        .connection-test {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .connection-item {
+            flex: 1;
+            min-width: 120px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .live-clock {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 종합 시스템 테스트 대시보드</h1>
+            <p>모든 시스템 상태와 브라우저 정보를 실시간으로 모니터링</p>
+            <span class="status-indicator"></span>
+            <span>시스템 활성</span>
+        </div>
+
+        <div class="grid">
+            <!-- 브라우저 정보 -->
+            <div class="card">
+                <div class="card-header">🌐 브라우저 정보</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">브라우저</span>
+                        <span class="value" id="browser-name"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">버전</span>
+                        <span class="value" id="browser-version"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">User Agent</span>
+                        <span class="value" id="user-agent" style="font-size: 0.8rem; word-break: break-all;"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">플랫폼</span>
+                        <span class="value" id="platform"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">언어</span>
+                        <span class="value" id="language"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">온라인 상태</span>
+                        <span class="value" id="online-status"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 화면 및 장치 정보 -->
+            <div class="card">
+                <div class="card-header">📱 디스플레이 정보</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">화면 해상도</span>
+                        <span class="value" id="screen-resolution"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">브라우저 크기</span>
+                        <span class="value" id="window-size"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">뷰포트 크기</span>
+                        <span class="value" id="viewport-size"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">색상 깊이</span>
+                        <span class="value" id="color-depth"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">픽셀 비율</span>
+                        <span class="value" id="pixel-ratio"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">터치 지원</span>
+                        <span class="value" id="touch-support"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시간 및 위치 정보 -->
+            <div class="card">
+                <div class="card-header">🕒 시간 및 위치</div>
+                <div class="card-content">
+                    <div class="live-clock" id="live-clock"></div>
+                    <div class="info-row">
+                        <span class="label">시간대</span>
+                        <span class="value" id="timezone"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">UTC 오프셋</span>
+                        <span class="value" id="utc-offset"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">페이지 로드 시간</span>
+                        <span class="value" id="load-time"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">세션 시간</span>
+                        <span class="value" id="session-time"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">위치 서비스</span>
+                        <span class="value" id="geolocation"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 네트워크 상태 -->
+            <div class="card">
+                <div class="card-header">🌐 네트워크 상태</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">연결 타입</span>
+                        <span class="value" id="connection-type"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">다운링크 속도</span>
+                        <span class="value" id="downlink"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">RTT</span>
+                        <span class="value" id="rtt"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">데이터 절약 모드</span>
+                        <span class="value" id="save-data"></span>
+                    </div>
+                    <div class="connection-test" id="connection-tests"></div>
+                </div>
+            </div>
+
+            <!-- 브라우저 기능 지원 -->
+            <div class="card">
+                <div class="card-header">⚙️ 브라우저 기능 지원</div>
+                <div class="card-content" id="feature-support"></div>
+            </div>
+
+            <!-- 성능 메트릭 -->
+            <div class="card">
+                <div class="card-header">📊 성능 메트릭</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">메모리 사용량</span>
+                        <span class="value" id="memory-usage"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">DOM 로딩 시간</span>
+                        <span class="value" id="dom-load-time"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">리소스 로딩 시간</span>
+                        <span class="value" id="resource-load-time"></span>
+                    </div>
+                    <div class="test-section">
+                        <strong>성능 점수</strong>
+                        <div class="performance-meter">
+                            <div class="performance-text" id="performance-score">85</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 보안 및 권한 -->
+            <div class="card">
+                <div class="card-header">🔒 보안 및 권한</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">HTTPS 연결</span>
+                        <span class="value" id="https-status"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">쿠키 활성화</span>
+                        <span class="value" id="cookies-enabled"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">로컬 스토리지</span>
+                        <span class="value" id="local-storage"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">세션 스토리지</span>
+                        <span class="value" id="session-storage"></span>
+                    </div>
+                    <div class="test-section" id="permissions-test"></div>
+                </div>
+            </div>
+
+            <!-- 미디어 및 입력 장치 -->
+            <div class="card">
+                <div class="card-header">🎥 미디어 장치</div>
+                <div class="card-content">
+                    <div class="info-row">
+                        <span class="label">카메라 지원</span>
+                        <span class="value" id="camera-support"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">마이크 지원</span>
+                        <span class="value" id="microphone-support"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">오디오 컨텍스트</span>
+                        <span class="value" id="audio-context"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">WebGL 지원</span>
+                        <span class="value" id="webgl-support"></span>
+                    </div>
+                    <div class="test-section" id="media-devices"></div>
+                </div>
+            </div>
+
+            <!-- 실시간 모니터링 차트 -->
+            <div class="card">
+                <div class="card-header">📈 실시간 모니터링</div>
+                <div class="card-content">
+                    <div class="test-section">
+                        <strong>CPU 사용률 시뮬레이션</strong>
+                        <div class="chart-container" id="cpu-chart"></div>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">페이지 방문 횟수</span>
+                        <span class="value" id="visit-count"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">마지막 업데이트</span>
+                        <span class="value" id="last-update"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const startTime = Date.now();
+        let sessionStartTime = Date.now();
+
+        // 브라우저 감지 함수
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browserName = "Unknown";
+            let version = "Unknown";
+
+            if (ua.indexOf("Firefox") > -1) {
+                browserName = "Firefox";
+                version = ua.match(/Firefox\/(\d+)/)[1];
+            } else if (ua.indexOf("Chrome") > -1 && ua.indexOf("Edg") === -1) {
+                browserName = "Chrome";
+                version = ua.match(/Chrome\/(\d+)/)[1];
+            } else if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) {
+                browserName = "Safari";
+                version = ua.match(/Version\/(\d+)/)[1];
+            } else if (ua.indexOf("Edg") > -1) {
+                browserName = "Edge";
+                version = ua.match(/Edg\/(\d+)/)[1];
+            }
+
+            return { browserName, version };
+        }
+
+        // 기본 정보 설정
+        function setBasicInfo() {
+            const { browserName, version } = getBrowserInfo();
+            
+            document.getElementById('browser-name').textContent = browserName;
+            document.getElementById('browser-version').textContent = version;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('platform').textContent = navigator.platform;
+            document.getElementById('language').textContent = navigator.language;
+            document.getElementById('online-status').textContent = navigator.onLine ? '온라인 ✅' : '오프라인 ❌';
+        }
+
+        // 화면 정보 설정
+        function setDisplayInfo() {
+            document.getElementById('screen-resolution').textContent = `${screen.width}×${screen.height}`;
+            document.getElementById('window-size').textContent = `${window.innerWidth}×${window.innerHeight}`;
+            document.getElementById('viewport-size').textContent = `${document.documentElement.clientWidth}×${document.documentElement.clientHeight}`;
+            document.getElementById('color-depth').textContent = `${screen.colorDepth}bit`;
+            document.getElementById('pixel-ratio').textContent = window.devicePixelRatio;
+            document.getElementById('touch-support').textContent = 'ontouchstart' in window ? '지원 ✅' : '미지원 ❌';
+        }
+
+        // 시간 정보 설정
+        function setTimeInfo() {
+            const now = new Date();
+            document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('utc-offset').textContent = `UTC${now.getTimezoneOffset() / -60 >= 0 ? '+' : ''}${now.getTimezoneOffset() / -60}`;
+            document.getElementById('load-time').textContent = `${Date.now() - startTime}ms`;
+            
+            // 지오로케이션 확인
+            if ("geolocation" in navigator) {
+                document.getElementById('geolocation').textContent = '지원 ✅';
+            } else {
+                document.getElementById('geolocation').textContent = '미지원 ❌';
+            }
+        }
+
+        // 네트워크 정보 설정
+        function setNetworkInfo() {
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            if (connection) {
+                document.getElementById('connection-type').textContent = connection.effectiveType || 'Unknown';
+                document.getElementById('downlink').textContent = `${connection.downlink || 'Unknown'} Mbps`;
+                document.getElementById('rtt').textContent = `${connection.rtt || 'Unknown'} ms`;
+                document.getElementById('save-data').textContent = connection.saveData ? '활성 ✅' : '비활성 ❌';
+            } else {
+                document.getElementById('connection-type').textContent = 'N/A';
+                document.getElementById('downlink').textContent = 'N/A';
+                document.getElementById('rtt').textContent = 'N/A';
+                document.getElementById('save-data').textContent = 'N/A';
+            }
+
+            // 연결 테스트
+            testConnections();
+        }
+
+        // 연결 테스트
+        function testConnections() {
+            const tests = [
+                { name: 'DNS', url: 'https://dns.google' },
+                { name: 'CDN', url: 'https://cdnjs.cloudflare.com' },
+                { name: 'API', url: 'https://httpbin.org/get' }
+            ];
+
+            const container = document.getElementById('connection-tests');
+            container.innerHTML = '';
+
+            tests.forEach(test => {
+                const item = document.createElement('div');
+                item.className = 'connection-item';
+                item.innerHTML = `<strong>${test.name}</strong><br><span id="${test.name.toLowerCase()}-status">테스트 중...</span>`;
+                container.appendChild(item);
+
+                fetch(test.url, { mode: 'no-cors' })
+                    .then(() => {
+                        document.getElementById(`${test.name.toLowerCase()}-status`).innerHTML = '<span class="success">✅ 성공</span>';
+                    })
+                    .catch(() => {
+                        document.getElementById(`${test.name.toLowerCase()}-status`).innerHTML = '<span class="error">❌ 실패</span>';
+                    });
+            });
+        }
+
+        // 브라우저 기능 지원 확인
+        function checkFeatureSupport() {
+            const features = [
+                { name: 'WebRTC', supported: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection) },
+                { name: 'WebSocket', supported: !!window.WebSocket },
+                { name: 'Service Worker', supported: 'serviceWorker' in navigator },
+                { name: 'Push Notifications', supported: 'Notification' in window },
+                { name: 'Geolocation', supported: 'geolocation' in navigator },
+                { name: 'WebGL', supported: !!document.createElement('canvas').getContext('webgl') },
+                { name: 'Web Audio', supported: !!(window.AudioContext || window.webkitAudioContext) },
+                { name: 'IndexedDB', supported: !!window.indexedDB },
+                { name: 'File API', supported: !!(window.File && window.FileReader && window.FileList && window.Blob) },
+                { name: 'Fullscreen API', supported: !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) },
+                { name: 'Vibration API', supported: !!navigator.vibrate },
+                { name: 'Battery API', supported: !!(navigator.getBattery || navigator.battery) }
+            ];
+
+            const container = document.getElementById('feature-support');
+            features.forEach(feature => {
+                const row = document.createElement('div');
+                row.className = 'info-row';
+                row.innerHTML = `
+                    <span class="label">${feature.name}</span>
+                    <span class="test-result ${feature.supported ? 'success' : 'error'}">
+                        ${feature.supported ? '✅ 지원' : '❌ 미지원'}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // 성능 메트릭 설정
+        function setPerformanceMetrics() {
+            // 메모리 사용량
+            if (performance.memory) {
+                const memory = performance.memory;
+                const usedMB = Math.round(memory.usedJSHeapSize / 1048576);
+                const totalMB = Math.round(memory.totalJSHeapSize / 1048576);
+                document.getElementById('memory-usage').textContent = `${usedMB}MB / ${totalMB}MB`;
+            } else {
+                document.getElementById('memory-usage').textContent = 'N/A';
+            }
+
+            // 로딩 시간
+            if (performance.timing) {
+                const timing = performance.timing;
+                const domLoadTime = timing.domContentLoadedEventEnd - timing.navigationStart;
+                const resourceLoadTime = timing.loadEventEnd - timing.navigationStart;
+                
+                document.getElementById('dom-load-time').textContent = `${domLoadTime}ms`;
+                document.getElementById('resource-load-time').textContent = `${resourceLoadTime}ms`;
+            }
+        }
+
+        // 보안 정보 설정
+        function setSecurityInfo() {
+            document.getElementById('https-status').textContent = location.protocol === 'https:' ? '안전 ✅' : '비안전 ⚠️';
+            document.getElementById('cookies-enabled').textContent = navigator.cookieEnabled ? '활성 ✅' : '비활성 ❌';
+            
+            // 로컬 스토리지 테스트
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                document.getElementById('local-storage').textContent = '사용 가능 ✅';
+            } catch (e) {
+                document.getElementById('local-storage').textContent = '사용 불가 ❌';
+            }
+
+            // 세션 스토리지 테스트
+            try {
+                sessionStorage.setItem('test', 'test');
+                sessionStorage.removeItem('test');
+                document.getElementById('session-storage').textContent = '사용 가능 ✅';
+            } catch (e) {
+                document.getElementById('session-storage').textContent = '사용 불가 ❌';
+            }
+
+            // 권한 테스트
+            checkPermissions();
+        }
+
+        // 권한 확인
+        function checkPermissions() {
+            const container = document.getElementById('permissions-test');
+            const permissions = ['camera', 'microphone', 'notifications', 'geolocation'];
+
+            permissions.forEach(permission => {
+                if (navigator.permissions) {
+                    navigator.permissions.query({ name: permission }).then(result => {
+                        const div = document.createElement('div');
+                        div.className = 'info-row';
+                        div.innerHTML = `
+                            <span class="label">${permission}</span>
+                            <span class="test-result ${result.state === 'granted' ? 'success' : result.state === 'denied' ? 'error' : 'warning'}">
+                                ${result.state}
+                            </span>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            });
+        }
+
+        // 미디어 장치 정보
+        function setMediaInfo() {
+            document.getElementById('camera-support').textContent = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '지원 ✅' : '미지원 ❌';
+            document.getElementById('microphone-support').textContent = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '지원 ✅' : '미지원 ❌';
+            document.getElementById('audio-context').textContent = !!(window.AudioContext || window.webkitAudioContext) ? '지원 ✅' : '미지원 ❌';
+            document.getElementById('webgl-support').textContent = !!document.createElement('canvas').getContext('webgl') ? '지원 ✅' : '미지원 ❌';
+
+            // 미디어 장치 목록
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                navigator.mediaDevices.enumerateDevices().then(devices => {
+                    const container = document.getElementById('media-devices');
+                    const deviceTypes = { videoinput: 0, audioinput: 0, audiooutput: 0 };
+                    
+                    devices.forEach(device => {
+                        if (deviceTypes.hasOwnProperty(device.kind)) {
+                            deviceTypes[device.kind]++;
+                        }
+                    });
+
+                    container.innerHTML = `
+                        <strong>감지된 장치:</strong><br>
+                        카메라: ${deviceTypes.videoinput}개<br>
+                        마이크: ${deviceTypes.audioinput}개<br>
+                        스피커: ${deviceTypes.audiooutput}개
+                    `;
+                });
+            }
+        }
+
+        // 실시간 차트 생성
+        function createRealtimeChart() {
+            const container = document.getElementById('cpu-chart');
+            const bars = [];
+            
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.left = `${i * 5}%`;
+                bar.style.width = '4%';
+                bar.style.height = `${Math.random() * 80 + 20}%`;
+                container.appendChild(bar);
+                bars.push(bar);
+            }
+
+            // 애니메이션
+            setInterval(() => {
+                bars.forEach(bar => {
+                    bar.style.height = `${Math.random() * 80
