@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Pages 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            margin: 2rem;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        p {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-size: 0.9rem;
+            color: #95a5a6;
+        }
+
+        .status {
+            display: inline-block;
+            background: #2ecc71;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="emoji">🚀</span>
+        <h1>GitHub Pages 테스트</h1>
+        <div class="status">✓ 배포 성공!</div>
+        
+        <p>GitHub Pages가 정상적으로 작동하고 있습니다. 이제 여러분의 프로젝트를 세상에 공유할 준비가 되었어요!</p>
+        
+        <div class="info-box">
+            <h3>🌐 배포 정보</h3>
+            <p><strong>배포일:</strong> <span id="deploy-date"></span></p>
+            <p><strong>브라우저:</strong> <span id="browser-info"></span></p>
+            <p><strong>화면 크기:</strong> <span id="screen-size"></span></p>
+        </div>
+        
+        <div class="info-box">
+            <h3>📋 다음 단계</h3>
+            <p>1. 이 파일을 index.html로 저장<br>
+            2. 깃허브 저장소에 업로드<br>
+            3. Settings → Pages에서 활성화<br>
+            4. 몇 분 후 URL로 접속 확인!</p>
+        </div>
+        
+        <a href="https://github.com" class="button">GitHub 바로가기</a>
+        <a href="https://docs.github.com/ko/pages" class="button">Pages 문서</a>
+        
+        <div class="footer">
+            Made with ❤️ for GitHub Pages Testing
+            <br>
+            <small>페이지가 보인다면 배포가 성공한 것입니다! 🎉</small>
+        </div>
+    </div>
+
+    <script>
+        // 현재 정보 표시
+        document.getElementById('deploy-date').textContent = new Date().toLocaleString('ko-KR');
+        document.getElementById('browser-info').textContent = navigator.userAgent.split(' ')[0];
+        document.getElementById('screen-size').textContent = window.innerWidth + 'x' + window.innerHeight;
+        
+        // 간단한 인터랙션
+        document.querySelector('.emoji').addEventListener('click', function() {
+            this.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                this.style.transform = 'rotate(0deg)';
+            }, 500);
+        });
+    </script>
+</body>
+</html>
