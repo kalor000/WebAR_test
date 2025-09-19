@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>드론 비행 실시간 날씨 정보 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .location-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .location-input {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .location-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .location-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .card-content {
+            margin-top: 20px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 500;
+            color: #555;
+            font-size: 1rem;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-good {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .status-caution {
+            background: linear-gradient(45deg, #FF9800, #f57c00);
+            color: white;
+            box-shadow: 0 2px 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .status-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+            box-shadow: 0 2px 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .flight-status {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .flight-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .flight-status h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .flight-indicator {
+            font-size: 4rem;
+            margin: 25px 0;
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.1));
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .flight-recommendation {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-footer {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .last-updated {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        .data-sources {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #f57c00;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .card, .flight-status {
+                padding: 25px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚁 드론 비행 실시간 정보 대시보드</h1>
+            <p>기상청·에어코리아·우주전파센터 실시간 데이터 기반</p>
+            
+            <div class="location-selector">
+                <input type="text" class="location-input" id="location-input" placeholder="지역명을 입력하세요 (예: 서울, 부산)" value="서울">
+                <button class="location-btn" onclick="getCurrentLocation()">📍 현재 위치</button>
+                <button class="location-btn" onclick="updateLocation()">🔍 지역 변경</button>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            ⚠️ <strong>API 인증키 필요:</strong> 실제 데이터 사용을 위해서는 각 기관의 API 인증키가 필요합니다. 
+            현재는 데모 모드로 작동 중이며, 실제 사용 시 기상청, 에어코리아, 우주전파센터의 API 키를 설정해주세요.
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🌤️</div>
+                    <div>
+                        <div class="card-title">실시간 기상정보</div>
+                        <div class="card-subtitle">기상청 동네예보 API</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span class="metric-label">현재 온도</span>
+                        <span class="metric-value" id="temperature">--°C</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">상대습도</span>
+                        <span class="metric-value" id="humidity">--%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">강수확률</span>
+                        <span class="metric-value" id="precipitation">--%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">하늘상태</span>
+                        <span class="metric-value" id="sky-condition">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">비행 적합성</span>
+                        <span class="status" id="weather-status">확인 중</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💨</div>
+                    <div>
+                        <div class="card-title">풍속·풍향 정보</div>
+                        <div class="card-subtitle">기상청 실시간 관측데이터</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span class="metric-label">현재 풍속</span>
+                        <span class="metric-value" id="wind-speed">-- m/s</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">풍향</span>
+                        <span class="metric-value" id="wind-direction">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">최대 순간풍속</span>
+                        <span class="metric-value" id="wind-gust">-- m/s</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">기압</span>
+                        <span class="metric-value" id="pressure">-- hPa</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">풍속 안전도</span>
+                        <span class="status" id="wind-status">확인 중</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🌫️</div>
+                    <div>
+                        <div class="card-title">대기질 정보</div>
+                        <div class="card-subtitle">에어코리아 실시간 측정데이터</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span class="metric-label">초미세먼지 (PM2.5)</span>
+                        <span class="metric-value" id="pm25">-- μg/m³</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">미세먼지 (PM10)</span>
+                        <span class="metric-value" id="pm10">-- μg/m³</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">오존 (O₃)</span>
+                        <span class="metric-value" id="ozone">-- ppm</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">통합대기환경지수</span>
+                        <span class="metric-value" id="air-index">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">시정 적합성</span>
+                        <span class="status" id="air-quality-status">확인 중</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🧭</div>
+                    <div>
+                        <div class="card-title">지자기·GPS 정보</div>
+                        <div class="card-subtitle">우주전파센터 실시간 데이터</div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="metric">
+                        <span class="metric-label">Kp 지수</span>
+                        <span class="metric-value" id="kp-index">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">지자기 활동도</span>
+                        <span class="metric-value" id="magnetic-activity">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">전리층 상태</span>
+                        <span class="metric-value" id="ionosphere-status">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">GPS 신호 품질</span>
+                        <span class="metric-value" id="gps-quality">--</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">나침반 정확도</span>
+                        <span class="status" id="compass-status">확인 중</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flight-status">
+            <h2>🚁 드론 비행 종합 안전 판정</h2>
+            <div class="flight-indicator" id="flight-indicator">🔄</div>
+            <div class="flight-recommendation" id="flight-recommendation">실시간 데이터를 불러오는 중...</div>
+            
+            <div class="controls">
+                <button class="btn" onclick="refreshAllData()">
+                    <span id="refresh-text">📡 전체 데이터 새로고침</span>
+                </button>
+                <button class="btn" onclick="showDetailedAnalysis()">
+                    📊 상세 분석 보기
+                </button>
+                <button class="btn" onclick="setAutoRefresh()">
+                    🔄 자동 새로고침 설정
+                </button>
+            </div>
+        </div>
+
+        <div class="info-footer">
+            <div class="last-updated" id="last-updated">
+                마지막 업데이트: --
+            </div>
+            <div class="data-sources">
+                데이터 출처: 기상청 동네예보API · 에어코리아 대기오염정보API · 우주전파센터 우주환경API<br>
+                드론 비행 안전기준: 국토교통부 무인비행장치 운용지침 준수
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 설정 (실제 사용시 환경변수나 별도 설정파일에서 관리)
+        const API_CONFIG = {
+            KMA_API_KEY: 'YOUR_KMA_API_KEY', // 기상청 API 키
+            AIRKOREA_API_KEY: 'YOUR_AIRKOREA_API_KEY', // 에어코리아 API 키
+            SPACEWEATHER_API_KEY: 'YOUR_SPACEWEATHER_API_KEY', // 우주전파센터 API 키
+            // 기본 위치 (서울시청)
+            DEFAULT_LAT: 37.5665,
+            DEFAULT_LON: 126.9780
+        };
+
+        let currentLocation = {
+            name: '서울특별시',
+            lat: API_CONFIG.DEFAULT_LAT,
+            lon: API_CONFIG.DEFAULT_LON
+        };
+
+        let autoRefreshInterval = null;
+
+        // 기상청 API - 동네예보 데이터 가져오기
+        async function fetchWeatherData() {
+            try {
+                // 좌표를 격자좌표로 변환 (기상청 API 요구사항)
+                const gridXY = convertToGrid(currentLocation.lat, currentLocation.lon);
+                
+                // 현재 시간 기준으로 API 호출 시간 설정
+                const now = new Date();
+                const baseDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+                const baseTime = Math.floor(now.getHours() / 3) * 3;
+                const baseTimeStr = baseTime.toString().padStart(2, '0') + '00';
+
+                const url = `http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${API_CONFIG.KMA_API_KEY}&numOfRows=10&pageNo=1&dataType=JSON&base_date=${baseDate}&base_time=${baseTimeStr}&nx=${gridXY.x}&ny=${gridXY.y}`;
+                
+                // CORS 문제로 인해 실제 환경에서는 프록시 서버나 백엔드 API를 통해 호출
+                // 현재는 모의 데이터 반환
+                return generateWeatherData();
+                
+            } catch (error) {
+                console.error('기상 데이터 조회 실패:', error);
+                return generateWeatherData(); // 모의 데이터로 대체
+            }
+        }
+
+        // 에어코리아 API - 대기질 데이터 가져오기
+        async function fetchAirQualityData() {
+            try {
+                const stationName = getAirQualityStation(currentLocation.name);
+                const url = `http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?serviceKey=${API_CONFIG.AIRKOREA_API_KEY}&returnType=json&numOfRows=1&pageNo=1&stationName=${encodeURIComponent(stationName)}&dataTerm=DAILY&ver=1.0`;
+                
+                // 실제 환경에서는 백엔드를 통해 API 호출
+                return generateAirQualityData();
+                
+            } catch (error) {
+                console.error('대기질 데이터 조회 실패:', error);
+                return generateAirQualityData();
+            }
+        }
+
+        // 우주전파센터 API - 우주환경 데이터 가져오기
+        async function fetchSpaceWeatherData() {
+            try {
+                const url = `https://www.spaceweather.go.kr/api/getData?apiKey=${API_CONFIG.SPACEWEATHER_API_KEY}&type=realtime`;
+                
+                // 실제 환경에서는 백엔드를 통해 API 호출
+                return generateMagneticData();
+                
+            } catch (error) {
+                console.error('우주환경 데이터 조회 실패:', error);
+                return generateMagneticData();
+            }
+        }
+
+        // 좌표를 기상청 격자좌표로 변환하는 함수
+        function convertToGrid(lat, lon) {
+            // 기상청 격자 변환 알고리즘 (간소화된 버전)
+            const RE = 6371.00877;
+            const GRID = 5.0;
+            const SLAT1 = 30.0;
+            const SLAT2 = 60.0;
+            const OLON = 126.0;
+            const OLAT = 38.0;
+            const XO = 43;
+            const YO = 136;
+
+            const DEGRAD = Math.PI / 180.0;
+            const re = RE / GRID;
+            const slat1 = SLAT1 * DEGRAD;
+            const slat2 = SLAT2 * DEGRAD;
+            const olon = OLON * DEGRAD;
+            const olat = OLAT * DEGRAD;
+
+            let sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+            sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+            let sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+            sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
+            let ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+            ro = re * sf / Math.pow(ro, sn);
+
+            let ra = Math.tan(Math.PI * 0.25 + lat * DEGRAD * 0.5);
+            ra = re * sf / Math.pow(ra, sn);
+            let theta = lon * DEGRAD - olon;
+            if (theta > Math.PI) theta -= 2.0 * Math.PI;
+            if (theta < -Math.PI) theta += 2.0 * Math.PI;
+            theta *= sn;
+
+            const x = Math.floor(ra * Math.sin(theta) + XO + 0.5);
+            const y = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+
+            return { x, y };
+        }
+
+        // 지역명으로 대기질 측정소 이름 매핑
+        function getAirQualityStation(locationName) {
+            const stationMap = {
+                '서울특별시': '종로구',
+                '부산광역시': '부산',
+                '대구광역시': '대구',
+                '인천광역시': '인천',
+                '광주광역시': '광주',
+                '대전광역시': '대전',
+                '울산광역시': '울산',
+                '세종특별자치시': '세종',
+                '경기도': '수원',
+                '강원도': '춘천',
+                '충청북도': '청주',
+                '충청남도': '천안',
+                '전라북도': '전주',
+                '전라남도': '광주',
+                '경상북도': '대구',
+                '경상남도': '창원',
+                '제주특별자치도': '제주'
+            };
+            return stationMap[locationName] || '종로구';
+        }
+
+        // 모의 데이터 생성 함수들 (API 연결 전 테스트용)
+        function generateWeatherData() {
+            const temp = Math.round(Math.random() * 25 + 5);
+            const humidity = Math.round(Math.random() * 40 + 40);
+            const precipitation = Math.round(Math.random() * 30);
+            const conditions = ['맑음', '구름조금', '구름많음', '흐림', '비', '눈'];
+            
+            return {
+                temperature: temp,
+                humidity: humidity,
+                precipitation: precipitation,
+                skyCondition: conditions[Math.floor(Math.random() * conditions.length)],
+                windSpeed: (Math.random() * 12 + 1).toFixed(1),
+                windDirection: ['북', '북동', '동', '남동', '남', '남서', '서', '북서'][Math.floor(Math.random() * 8)],
+                windGust: (Math.random() * 18 + 3).toFixed(1),
+                pressure: Math.round(Math.random() * 30 + 1000)
+            };
+        }
+
+        function generateAirQualityData() {
+            return {
+                pm25: Math.round(Math.random() * 80 + 5),
+                pm10: Math.round(Math.random() * 120 + 10),
+                ozone: (Math.random() * 0.1 + 0.02).toFixed(3),
+                airIndex: Math.round(Math.random() * 150 + 50),
+                grade: ['좋음', '보통', '나쁨', '매우나쁨'][Math.floor(Math.random() * 4)]
+            };
+        }
+
+        function generateMagneticData() {
+            const kp = (Math.random() * 6).toFixed(1);
+            const activities = ['조용', '안정', '약간불안정', '불안정', '큰폭발'];
+            
+            return {
+                kpIndex: kp,
+                activity: activities[Math.floor(Math.random() * activities.length)],
+                ionosphere: ['정상', '약간불안정', '불안정'][Math.floor(Math.random() * 3)],
+                gpsQuality: ['우수', '양호', '보통', '나쁨'][Math.floor(Math.random() * 4)]
+            };
+        }
+
+        // 데이터 업데이트 함수들
+        function updateWeatherDisplay(data) {
+            document.getElementById('temperature').textContent = data.temperature + '°C';
+            document.getElementById('humidity').textContent = data.humidity + '%';
+            document.getElementById('precipitation').textContent = data.precipitation + '%';
+            document.getElementById('sky-condition').textContent = data.skyCondition;
+            document.getElementById('wind-speed').textContent = data.windSpeed + ' m/s';
+            document.
